@@ -144,6 +144,7 @@ function calculateCustomerTotal(name) {
 <template>
     <div class="card">
         <div class="font-semibold text-xl mb-4">Filtering</div>
+        {{ customers1 }}
         <DataTable
             :value="customers1"
             :paginator="true"

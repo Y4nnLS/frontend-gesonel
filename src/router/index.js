@@ -19,6 +19,11 @@ const router = createRouter({
                     component: () => import('@/views/Mokkup.vue')
                 },
                 {
+                    path: '/mokkup2',
+                    name: 'Mokkup2',
+                    component: () => import('@/views/Mokkup2.vue')
+                },
+                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')

@@ -253,47 +253,6 @@ watch(
         </div>
     </div>
 
-    <!-- Conteúdo Principal -->
-    <!-- Linha ocupando col-12 com 10 cards -->
-    <div class="grid grid-cols-12 gap-2 mt-4">
-        <!-- Card 1 -->
-        <div class="card col-span-3 p-1 flex flex-col items-center bg-white shadow-sm">
-            <label class="text-sm mb-2">Lorem ipsum</label>
-            <InputText type="text" v-model="inputs[0]" class="border border-gray-300 p-1 w-full text-center" />
-        </div>
-
-        <!-- Card 2 -->
-        <div class="card col-span-2 p-1 flex flex-col items-center bg-white shadow-sm">
-            <label class="text-sm mb-2">Lorem ipsum</label>
-            <InputText type="text" v-model="inputs[1]" class="border border-gray-300 p-1 w-full text-center" />
-        </div>
-
-        <!-- Card 6 -->
-        <div class="card col-span-1 p-1 flex flex-col items-center bg-white shadow-sm">
-            <label class="text-sm mb-2">Lorem ipsum</label>
-            <InputText type="text" v-model="inputs[5]" class="border border-gray-300 p-1 w-full text-center" />
-        </div>
-
-        <!-- Card 7 -->
-        <div class="card col-span-1 p-1 flex flex-col items-center bg-white shadow-sm">
-            <label class="text-sm mb-2">Lorem ipsum</label>
-            <InputText type="text" v-model="inputs[6]" class="border border-gray-300 p-1 w-full text-center" />
-        </div>
-
-        <!-- Card 9 -->
-        <div class="card col-span-2 p-1 flex flex-col items-center bg-white shadow-sm">
-            <label class="text-sm mb-2">Lorem ipsum</label>
-            <InputText type="text" v-model="inputs[8]" class="border border-gray-300 p-1 w-full text-center" />
-        </div>
-
-        <!-- Card 10 -->
-        <div class="card col-span-3 p-1 flex flex-col items-center bg-white shadow-sm">
-            <label class="text-sm mb-2">Lorem ipsum</label>
-            <InputText type="text" v-model="inputs[9]" class="border border-gray-300 p-1 w-full text-center" />
-        </div>
-    </div>
-    <Divider class="p-0 m-0" />
-
     <div class="grid mt-4 grid-cols-12 gap-4 items-center">
         <StatsWidget />
     </div>
