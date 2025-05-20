@@ -240,18 +240,16 @@ watch(
 
 <template>
     <!-- Container Grid -->
-    <div class="grid grid-cols-12 items-center">
-        <!-- Título à esquerda ocupando 9 colunas -->
+    <!-- <div class="grid grid-cols-12 items-center">
         <div class="col-span-9">
             <h2 class="text-left">Dashboard com dados mockados</h2>
         </div>
-        <!-- Botões à direita ocupando 3 colunas -->
         <div class="col-span-3 grid grid-cols-3 gap-2">
             <Button label="Tela 1" :onClick="clicou"></Button>
             <Button label="Tela 2" disabled="true" :onClick="clicou"></Button>
             <Button label="Tela 3" disabled="true" :onClick="clicou"></Button>
         </div>
-    </div>
+    </div> -->
 
     <div class="grid mt-4 grid-cols-12 gap-4 items-center">
         <StatsWidget />
@@ -271,6 +269,13 @@ watch(
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">
                 <div class="font-semibold text-xl mb-2">Bar</div>
                 <Chart type="bar" :data="barData" :options="barOptions"></Chart>
+            </div>
+        </div>
+        <div class="col-span-12 grid grid-cols-3 gap-4">
+            <!-- Gráfico Radar -->
+            <div class="card p-4 bg-white shadow-md flex flex-col items-center">
+                <div class="font-semibold text-xl mb-2">Radar</div>
+                <Chart type="radar" :data="radarData" :options="radarOptions"></Chart>
             </div>
 
             <!-- Gráfico Pie -->
