@@ -23,6 +23,10 @@ function getSeverity(status) {
             return null;
     }
 }
+
+function handleButtonClick(data) {
+    console.warn(data);
+}
 </script>
 
 <template>
@@ -41,7 +45,7 @@ function getSeverity(status) {
                 <DataTable
                     :value="customers1"
                     :paginator="true"
-                    :rows="10"
+                    :rows="18"
                     dataKey="id"
                     :resizableColumns="true"
                     :rowHover="true"
@@ -65,7 +69,7 @@ function getSeverity(status) {
             <div class="card h-full flex flex-col">
                 <div class="flex-1 flex flex-col">
                     <div class="font-semibold text-xl mb-4">Tabela de Dados</div>
-                    <DataTable :value="customers1" :paginator="true" :rows="10" dataKey="id" :resizableColumns="true" :rowHover="true" showGridlines>
+                    <DataTable :value="customers1" :paginator="true" :rows="11" dataKey="id" :resizableColumns="true" :rowHover="true" showGridlines>
                         <template #empty> No customers found. </template>
                         <template #loading> Loading customers data. Please wait. </template>
                         <Column field="name" header="Name" style="min-width: 12rem">
@@ -81,6 +85,11 @@ function getSeverity(status) {
                         <Column field="verified" header="Verified" dataType="boolean" bodyClass="text-center" style="min-width: 8rem">
                             <template #body="{ data }">
                                 <i class="pi" :class="{ 'pi-check-circle text-green-500 ': data.verified, 'pi-times-circle text-red-500': !data.verified }"></i>
+                            </template>
+                        </Column>
+                        <Column header="Actions" dataType="boolean" bodyClass="text-center" style="min-width: 8rem">
+                            <template #body="{ data }">
+                                <Button class="p-button-rounded" icon="pi pi-upload" severity="success" style="width: 30px; height: 30px" @click="handleButtonClick(data)"></Button>
                             </template>
                         </Column>
                     </DataTable>
