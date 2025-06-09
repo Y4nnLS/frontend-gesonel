@@ -18,12 +18,26 @@ const lineData = ref(null);
 const pieData = ref(null);
 const polarData = ref(null);
 const barData = ref(null);
-const radarData = ref(null);
+const radarData1 = ref(null);
+const radarData2 = ref(null);
 const lineOptions = ref(null);
 const pieOptions = ref(null);
 const polarOptions = ref(null);
 const barOptions = ref(null);
 const radarOptions = ref(null);
+
+const predictedLabels = ['Felicidade', 'Tristeza', 'Raiva', 'Medo', 'Neutro', 'Surpresa', 'Nojo'];
+
+// Matriz de confusão com as 7 emoções
+const confusionMatrix = ref([
+    { trueLabel: 'Felicidade', Felicidade: 50, Tristeza: 2, Raiva: 1, Medo: 0, Neutro: 2, Surpresa: 1, Nojo: 0 },
+    { trueLabel: 'Tristeza', Felicidade: 3, Tristeza: 45, Raiva: 0, Medo: 1, Neutro: 1, Surpresa: 2, Nojo: 0 },
+    { trueLabel: 'Raiva', Felicidade: 2, Tristeza: 1, Raiva: 40, Medo: 4, Neutro: 3, Surpresa: 0, Nojo: 1 },
+    { trueLabel: 'Medo', Felicidade: 0, Tristeza: 1, Raiva: 3, Medo: 42, Neutro: 4, Surpresa: 0, Nojo: 2 },
+    { trueLabel: 'Neutro', Felicidade: 1, Tristeza: 2, Raiva: 2, Medo: 3, Neutro: 47, Surpresa: 1, Nojo: 1 },
+    { trueLabel: 'Surpresa', Felicidade: 1, Tristeza: 2, Raiva: 2, Medo: 3, Neutro: 5, Surpresa: 35, Nojo: 2 },
+    { trueLabel: 'Nojo', Felicidade: 1, Tristeza: 2, Raiva: 2, Medo: 3, Neutro: 4, Surpresa: 1, Nojo: 37 }
+]);
 
 onMounted(() => {
     setColorOptions();
@@ -36,19 +50,19 @@ function setColorOptions() {
     const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
 
     barData.value = {
-        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        labels: ['A1', 'B1', 'C1', 'A2', 'B2', 'C2'],
         datasets: [
             {
-                label: 'My First dataset',
+                label: 'Acurácia (Treino)',
                 backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
                 borderColor: documentStyle.getPropertyValue('--p-primary-500'),
-                data: [65, 59, 80, 81, 56, 55, 40]
+                data: [92, 90, 91, 93, 89, 88]
             },
             {
-                label: 'My Second dataset',
+                label: 'Acurácia (Teste)',
                 backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
                 borderColor: documentStyle.getPropertyValue('--p-primary-200'),
-                data: [28, 48, 40, 19, 86, 27, 90]
+                data: [90, 88, 89, 91, 87, 85]
             }
         ]
     };
@@ -86,12 +100,28 @@ function setColorOptions() {
     };
 
     pieData.value = {
-        labels: ['A', 'B', 'C'],
+        labels: [...predictedLabels],
         datasets: [
             {
-                data: [540, 325, 702],
-                backgroundColor: [documentStyle.getPropertyValue('--p-indigo-500'), documentStyle.getPropertyValue('--p-purple-500'), documentStyle.getPropertyValue('--p-teal-500')],
-                hoverBackgroundColor: [documentStyle.getPropertyValue('--p-indigo-400'), documentStyle.getPropertyValue('--p-purple-400'), documentStyle.getPropertyValue('--p-teal-400')]
+                data: [20, 15, 25, 30, 10, 18, 12], // valores simulados
+                backgroundColor: [
+                    documentStyle.getPropertyValue('--p-indigo-500'),
+                    documentStyle.getPropertyValue('--p-purple-500'),
+                    documentStyle.getPropertyValue('--p-teal-500'),
+                    documentStyle.getPropertyValue('--p-orange-500'),
+                    documentStyle.getPropertyValue('--p-cyan-500'),
+                    documentStyle.getPropertyValue('--p-yellow-500'),
+                    documentStyle.getPropertyValue('--p-green-500')
+                ],
+                hoverBackgroundColor: [
+                    documentStyle.getPropertyValue('--p-indigo-400'),
+                    documentStyle.getPropertyValue('--p-purple-400'),
+                    documentStyle.getPropertyValue('--p-teal-400'),
+                    documentStyle.getPropertyValue('--p-orange-400'),
+                    documentStyle.getPropertyValue('--p-cyan-400'),
+                    documentStyle.getPropertyValue('--p-yellow-400'),
+                    documentStyle.getPropertyValue('--p-green-400')
+                ]
             }
         ]
     };
@@ -108,19 +138,19 @@ function setColorOptions() {
     };
 
     lineData.value = {
-        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        labels: ['Época 1', 'Época 2', 'Época 3', 'Época 4', 'Época 5', 'Época 6', 'Época 7', 'Época 8', 'Época 9', 'Época 10'],
         datasets: [
             {
-                label: 'First Dataset',
-                data: [65, 59, 80, 81, 56, 55, 40],
+                label: 'Modelo A1',
+                data: [70, 75, 80, 82, 85, 87, 88, 89, 90, 91],
                 fill: false,
                 backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
                 borderColor: documentStyle.getPropertyValue('--p-primary-500'),
                 tension: 0.4
             },
             {
-                label: 'Second Dataset',
-                data: [28, 48, 40, 19, 86, 27, 90],
+                label: 'Modelo B1',
+                data: [68, 73, 78, 80, 83, 85, 87, 88, 89, 90],
                 fill: false,
                 backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
                 borderColor: documentStyle.getPropertyValue('--p-primary-200'),
@@ -167,7 +197,7 @@ function setColorOptions() {
                 label: 'My dataset'
             }
         ],
-        labels: ['Indigo', 'Purple', 'Teal', 'Orange']
+        label: 'Distribuição de Emoções'
     };
 
     polarOptions.value = {
@@ -187,11 +217,11 @@ function setColorOptions() {
         }
     };
 
-    radarData.value = {
-        labels: ['Eating', 'Drinking', 'Sleeping', 'Designing', 'Coding', 'Cycling', 'Running'],
+    radarData2.value = {
+        labels: ['Felicidade', 'Tristeza', 'Raiva', 'Medo', 'Surpresa', 'Nojo', 'Neutro'],
         datasets: [
             {
-                label: 'My First dataset',
+                label: 'Modelo A1',
                 borderColor: documentStyle.getPropertyValue('--p-indigo-400'),
                 pointBackgroundColor: documentStyle.getPropertyValue('--p-indigo-400'),
                 pointBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
@@ -200,13 +230,28 @@ function setColorOptions() {
                 data: [65, 59, 90, 81, 56, 55, 40]
             },
             {
-                label: 'My Second dataset',
+                label: 'Modelo A2',
                 borderColor: documentStyle.getPropertyValue('--p-purple-400'),
                 pointBackgroundColor: documentStyle.getPropertyValue('--p-purple-400'),
                 pointBorderColor: documentStyle.getPropertyValue('--p-purple-400'),
                 pointHoverBackgroundColor: textColor,
                 pointHoverBorderColor: documentStyle.getPropertyValue('--p-purple-400'),
                 data: [28, 48, 40, 19, 96, 27, 100]
+            }
+        ]
+    };
+
+    radarData1.value = {
+        labels: ['Felicidade', 'Tristeza', 'Raiva', 'Medo', 'Surpresa', 'Nojo', 'Neutro'],
+        datasets: [
+            {
+                label: 'Modelo A1',
+                borderColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                pointBackgroundColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                pointBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                pointHoverBackgroundColor: textColor,
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                data: [65, 59, 90, 81, 56, 55, 40]
             }
         ]
     };
@@ -236,6 +281,24 @@ watch(
     },
     { immediate: true }
 );
+
+// calcula o máximo pra normalizar
+const maxValue = Math.max(...confusionMatrix.value.flatMap((row) => predictedLabels.map((k) => row[k])));
+
+// função que retorna um objeto de estilos dinâmico
+function cellStyle({ data, column }) {
+    const value = data[column.field];
+    const alpha = value / maxValue; // normaliza entre 0 e 1
+    return {
+        backgroundColor: `rgba(33,150,243,${alpha.toFixed(2)})`,
+        color: alpha > 0.5 ? '#fff' : '#000',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    };
+}
 </script>
 
 <template>
@@ -261,33 +324,37 @@ watch(
         <div class="col-span-12 grid grid-cols-2 gap-4">
             <!-- Gráfico Linear -->
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Linear</div>
+                <div class="font-semibold text-xl mb-2">Evolução da Acurácia por Época</div>
                 <Chart type="line" :data="lineData" :options="lineOptions"></Chart>
             </div>
 
             <!-- Gráfico de Barras -->
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Bar</div>
+                <div class="font-semibold text-xl mb-2">Comparação de Acurácia: Treino vs. Teste</div>
                 <Chart type="bar" :data="barData" :options="barOptions"></Chart>
             </div>
         </div>
         <div class="col-span-12 grid grid-cols-3 gap-4">
             <!-- Gráfico Radar -->
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Radar</div>
-                <Chart type="radar" :data="radarData" :options="radarOptions"></Chart>
+                <div class="font-semibold text-xl mb-2">Perfil de Emoções</div>
+                <Chart type="radar" :data="radarData1" :options="radarOptions"></Chart>
             </div>
 
             <!-- Gráfico Pie -->
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Pie</div>
+                <div class="font-semibold text-xl mb-2">Distribuição de Emoções</div>
                 <Chart type="pie" :data="pieData" :options="pieOptions"></Chart>
             </div>
 
-            <!-- Gráfico Radar -->
-            <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Radar</div>
-                <Chart type="radar" :data="radarData" :options="radarOptions"></Chart>
+            <div class="card p-4 bg-white shadow-md" style="overflow: auto; max-height: 450px">
+                <div class="font-semibold text-xl mb-4">Matriz de Confusão</div>
+
+                <DataTable :value="confusionMatrix" showGridlines :tableStyle="{ width: '100%' }" scrollable scrollHeight="calc(100% - 2rem)">
+                    <Column field="trueLabel" header="Classe Verdadeira" :style="{ width: '15%' }" />
+
+                    <Column v-for="pred in predictedLabels" :key="pred" :field="pred" :header="pred" :bodyStyle="cellStyle" :style="{ textAlign: 'center', width: `${85 / predictedLabels.length}%` }" />
+                </DataTable>
             </div>
         </div>
     </div>

@@ -35,8 +35,22 @@ function handleButtonClick(data) {
             <div class="card mb-2">
                 <div class="col-span-full lg:col-span-6">
                     <div class="card">
-                        <div class="font-semibold text-xl mb-4">Advanced</div>
-                        <FileUpload name="demo[]" @uploader="onUpload" :multiple="true" accept="image/*" :maxFileSize="1000000" customUpload />
+                        <div class="font-semibold text-xl mb-4">Upload de Áudio</div>
+                        <FileUpload
+                            name="demo[]"
+                            @uploader="onUpload"
+                            :multiple="true"
+                            accept="image/*"
+                            :maxFileSize="1000000"
+                            customUpload
+                            chooseLabel="Selecionar"
+                            uploadLabel="Upload"
+                            cancelLabel="Cancelar"
+                            chooseIcon="pi pi-upload text-xl"
+                            uploadIcon="pi pi-cloud-upload text-xl"
+                            cancelIcon="pi pi-ban text-xl"
+                            D
+                        />
                     </div>
                 </div>
             </div>
@@ -56,10 +70,10 @@ function handleButtonClick(data) {
                 >
                     <template #empty> No customers found. </template>
                     <template #loading> Loading customers data. Please wait. </template>
-                    <Column field="name" header="Name" style="min-width: 12rem">
+                    <Column field="name" header="Nome" style="min-width: 12rem">
                         <template #body="{ data }"> </template>
                     </Column>
-                    <Column header="Date" filterField="date" dataType="date"> </Column>
+                    <Column header="Dados" filterField="Data" dataType="date"> </Column>
                     <Column header="Ações" filterField="balance" dataType="numeric"> </Column>
                 </DataTable>
             </div>
@@ -72,22 +86,22 @@ function handleButtonClick(data) {
                     <DataTable :value="customers1" :paginator="true" :rows="11" dataKey="id" :resizableColumns="true" :rowHover="true" showGridlines>
                         <template #empty> No customers found. </template>
                         <template #loading> Loading customers data. Please wait. </template>
-                        <Column field="name" header="Name" style="min-width: 12rem">
+                        <Column field="name" header="Nome" style="min-width: 12rem">
                             <template #body="{ data }"> </template>
                         </Column>
-                        <Column header="Date" filterField="date" dataType="date" style="min-width: 10rem" />
-                        <Column header="Ações" filterField="balance" dataType="numeric" style="min-width: 10rem" />
-                        <Column header="Status" field="status" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
+                        <Column header="Dados" filterField="date" dataType="date" style="min-width: 10rem" />
+                        <Column header="Status" filterField="balance" dataType="numeric" style="min-width: 10rem" />
+                        <Column header="Emoções" field="status" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
                             <template #body="{ data }">
                                 <Tag :value="data.status" :severity="getSeverity(data.status)" />
                             </template>
                         </Column>
-                        <Column field="verified" header="Verified" dataType="boolean" bodyClass="text-center" style="min-width: 8rem">
+                        <Column field="verified" header="Analisado" dataType="boolean" bodyClass="text-center" style="min-width: 8rem">
                             <template #body="{ data }">
                                 <i class="pi" :class="{ 'pi-check-circle text-green-500 ': data.verified, 'pi-times-circle text-red-500': !data.verified }"></i>
                             </template>
                         </Column>
-                        <Column header="Actions" dataType="boolean" bodyClass="text-center" style="min-width: 8rem">
+                        <Column header="Ações" dataType="boolean" bodyClass="text-center" style="min-width: 8rem">
                             <template #body="{ data }">
                                 <Button class="p-button-rounded" icon="pi pi-upload" severity="success" style="width: 30px; height: 30px" @click="handleButtonClick(data)"></Button>
                             </template>
