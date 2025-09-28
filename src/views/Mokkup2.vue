@@ -1,8 +1,45 @@
 <script setup>
 /* eslint-disable */
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import * as dataBack from '../service/DataBackService.js';
 import cust1 from './cust1.json';
+// Importa o composable WS
+import { useWsAudioUpdates } from '../layout/composables/useWsAudioUpdates.js';
+
+// Se você configurou proxy do Vite (abaixo), pode usar apenas "/ws/audio-updates".
+// Ou passe a URL completa: "ws://localhost:8000/ws/audio-updates"
+const { msgs, status, error } = useWsAudioUpdates('ws://127.0.0.1:8000/ws/audio-updates');
+
+// ➋ Reage a novas mensagens (ex.: atualizar tabela, notificar, etc.)
+watch(
+    msgs,
+    (list) => {
+        const last = list[list.length - 1];
+        if (!last) return;
+
+        // last esperado do back (fake/listener): { op, table, id, rel_path, duration_s, at, ... }
+        console.log('[WS] evento', last);
+
+        // EXEMPLO: empurrar no topo de "Atividades Recentes"
+        // adapte ao shape do seu DataTable (customers1)
+        try {
+            const item = typeof last === 'string' ? JSON.parse(last) : last;
+            customers1.value.unshift({
+                id: item.id ?? crypto.randomUUID?.() ?? String(Date.now()),
+                name: item.rel_path ?? 'evento',
+                status: item.op?.toLowerCase?.() ?? 'neutro',
+                verified: item.op === 'INSERT',
+                date: item.at ?? new Date().toISOString()
+            });
+            // Limita o tamanho
+            if (customers1.value.length > 200) customers1.value.pop();
+        } catch (e) {
+            console.warn('Falha ao processar WS:', e);
+        }
+    },
+    { deep: true }
+);
+
 const customers1 = ref(cust1);
 
 function getSeverity(status) {
@@ -24,8 +61,12 @@ function getSeverity(status) {
     }
 }
 
+async function onUpload(event) {
+    // TODO: Implementar upload
+    console.log(event);
+}
+
 function handleButtonClick(data) {
-    console.warn(data);
     getAllAudios();
 }
 
