@@ -1,8 +1,8 @@
 <script setup>
 /* eslint-disable */
 import { ref } from 'vue';
+import * as dataBack from '../service/DataBackService.js';
 import cust1 from './cust1.json';
-
 const customers1 = ref(cust1);
 
 function getSeverity(status) {
@@ -26,6 +26,17 @@ function getSeverity(status) {
 
 function handleButtonClick(data) {
     console.warn(data);
+    getAllAudios();
+}
+
+async function getAllAudios() {
+    var response = await dataBack.getAudios('token');
+    if (response.status == 200) {
+        const auxTeste = JSON.parse(await response.text());
+        console.log(auxTeste);
+    } else {
+        console.log('Erro: ' + response.status);
+    }
 }
 </script>
 
