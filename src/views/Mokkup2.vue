@@ -6,9 +6,9 @@ import cust1 from './cust1.json';
 // Importa o composable WS
 import { useWsAudioUpdates } from '../layout/composables/useWsAudioUpdates.js';
 
-// Se você configurou proxy do Vite (abaixo), pode usar apenas "/ws/audio-updates".
-// Ou passe a URL completa: "ws://localhost:8000/ws/audio-updates"
-const { msgs, status, error } = useWsAudioUpdates('ws://127.0.0.1:8000/ws/audio-updates');
+// Se você configurou proxy do Vite (abaixo), pode usar apenas "/ws/stream".
+// Ou passe a URL completa: "ws://localhost:8000/ws/stream"
+const { msgs, status, error } = useWsAudioUpdates();
 
 // ➋ Reage a novas mensagens (ex.: atualizar tabela, notificar, etc.)
 watch(

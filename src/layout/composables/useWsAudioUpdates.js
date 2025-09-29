@@ -1,12 +1,12 @@
 // src/layout/composables/useWsAudioUpdates.js
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-
+import * as global from '../../service/GlobalVariables.js';
 /**
  * WebSocket com reconexão exponencial, keep-alive (ping) e limpeza.
  * @param {string} url  Ex.: "/ws/audio-updates" (com proxy) ou "ws://127.0.0.1:8000/ws/audio-updates"
  * @param {object} opts { pingMs=30000, maxBackoffMs=15000, immediate=true }
  */
-export function useWsAudioUpdates(url = '/ws/audio-updates', opts = { pingMs: 30000, maxBackoffMs: 15000, immediate: true }) {
+export function useWsAudioUpdates(opts = { pingMs: 30000, maxBackoffMs: 15000, immediate: true }) {
     const msgs = ref([]); // mensagens recebidas (JSON ou string)
     const status = ref('idle'); // idle | connecting | open | closed
     const error = ref(null);
@@ -16,21 +16,12 @@ export function useWsAudioUpdates(url = '/ws/audio-updates', opts = { pingMs: 30
     let retryId = null;
     let attempts = 0;
 
-    const resolveUrl = () => {
-        // Se começar com '/', monta com o host atual (útil com proxy do Vite)
-        if (url.startsWith('/')) {
-            const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
-            return `${scheme}://${location.host}${url}`;
-        }
-        return url; // absoluta já
-    };
-
     const connect = () => {
         if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
 
         status.value = 'connecting';
         error.value = null;
-        const finalUrl = resolveUrl();
+        const finalUrl = global.webSocketUrl();
         console.log('[WS] connecting to', finalUrl);
 
         ws = new WebSocket(finalUrl);
