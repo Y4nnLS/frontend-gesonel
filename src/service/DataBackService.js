@@ -67,13 +67,21 @@ async function deleteRequestHeader(url, headers, nTries = 0) {
 // #endregion ======================================================= FUNÇÕES GENÉRICAS PARA REQUISIÇÕES =======================================================
 
 // #region ======================================================= AUDIOS ======================================================
-export async function getAudios(authToken) {
-    const dataBackUrl = `${global.backendUrl()}/v1/audios?limit=50&offset=0`;
+// DataBackService.js
+export async function getAudios(authToken, limit = 20, offset = 0) {
+    const dataBackUrl = `${global.backendUrl()}/v1/audios?limit=${limit}&offset=${offset}`;
     const header = { Authorization: 'Bearer ' + authToken };
     return getRequestHeader(dataBackUrl, header);
 }
+
 export async function getAudioById(authToken, audioId) {
     const dataBackUrl = `${global.backendUrl()}/v1/audios/${audioId}`;
+    const header = { Authorization: 'Bearer ' + authToken };
+    return getRequestHeader(dataBackUrl, header);
+}
+
+export async function downloadAudioById(authToken, audioId) {
+    const dataBackUrl = `${global.backendUrl()}/v1/audios/download/${audioId}`;
     const header = { Authorization: 'Bearer ' + authToken };
     return getRequestHeader(dataBackUrl, header);
 }
