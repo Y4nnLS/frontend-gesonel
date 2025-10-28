@@ -68,8 +68,8 @@ async function deleteRequestHeader(url, headers, nTries = 0) {
 
 // #region ======================================================= AUDIOS ======================================================
 // DataBackService.js
-export async function getAudios(authToken, limit = 20, offset = 0) {
-    const dataBackUrl = `${global.backendUrl()}/v1/audios?limit=${limit}&offset=${offset}`;
+export async function getAudios(authToken, limit = 20, offset = 0, pending = false) {
+    const dataBackUrl = `${global.backendUrl()}/v1/audios?limit=${limit}&offset=${offset}&pending=${pending}`;
     const header = { Authorization: 'Bearer ' + authToken };
     return getRequestHeader(dataBackUrl, header);
 }
@@ -86,11 +86,18 @@ export async function downloadAudioById(authToken, audioId) {
     return getRequestHeader(dataBackUrl, header);
 }
 
-export async function saveAudio(authToken, audio) {
-    // os parametros já são o body completamente montado
-    const dataBackUrl = `${global.backendUrl()}/v1/audios`;
+export async function saveAudio(authToken, file) {
+    const dataBackUrl = `${global.backendUrl()}/v1/audios/postAudio`;
+
+    // Backend espera o campo "file"
+    const form = new FormData();
+    form.append('file', file, file.name);
+
+    // NÃO definir Content-Type (o browser coloca o boundary)
     const header = { Authorization: 'Bearer ' + authToken };
-    return postRequestHeader(dataBackUrl, header);
+
+    // Usa sua helper como está: (url, headers, body, isString)
+    return postRequestHeader(dataBackUrl, header, form, /* isString */ false);
 }
 
 export async function editAudio(authToken, audioId, parameters) {
@@ -106,4 +113,41 @@ export async function deleteAudio(authToken, audioId) {
     const header = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken };
     return deleteRequestHeader(dataBackUrl, header);
 }
+
+export async function uploadStatus(authToken, audioId) {
+    const dataBackUrl = `${global.backendUrl()}/v1/upload/status/${audioId}`;
+    const header = { Authorization: 'Bearer ' + authToken };
+    return getRequestHeader(dataBackUrl, header);
+}
+
+// DataBackService.js
+export async function getAudioStreamUrl(authToken, audioId) {
+    const url = `${global.backendUrl()}/v1/audios/download/${audioId}`;
+    const headers = { Authorization: 'Bearer ' + authToken };
+
+    const res = await fetch(url, { headers });
+
+    if (!res.ok) {
+        // tenta ler mensagem para debugar no toast
+        let text = '';
+        try {
+            text = await res.text();
+        } catch {}
+        throw new Error(`Falha no download (${res.status}): ${text || 'sem corpo'}`);
+    }
+
+    const ct = (res.headers.get('Content-Type') || '').toLowerCase();
+    if (!ct.startsWith('audio/')) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Resposta não é áudio (Content-Type=${ct}). Corpo: ${text.slice(0, 200)}…`);
+    }
+
+    const blob = await res.blob();
+    if (!blob || blob.size === 0) {
+        throw new Error('Blob de áudio vazio (size=0).');
+    }
+
+    return URL.createObjectURL(blob); // blob:...
+}
+
 // #endregion ======================================================= AUDIOS ======================================================

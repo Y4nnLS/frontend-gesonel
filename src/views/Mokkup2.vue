@@ -1,20 +1,34 @@
 <script setup>
 /* eslint-disable */
-import { ref, watch } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { useWsAudioUpdates } from '../layout/composables/useWsAudioUpdates.js';
 import * as dataBack from '../service/DataBackService.js';
 import cust1 from './cust1.json';
 
+const toast = useToast();
+const confirm = useConfirm();
 const { msgs } = useWsAudioUpdates();
 
+// ---------- estados principais (não-pendentes)
 const audioFiles = ref([]);
-const total = ref(0); // total de registros (se o back enviar)
-const rows = ref(20); // page size (limit)
-const first = ref(0); // offset
+const total = ref(0); // total (não-pendentes)
+const rows = ref(20); // page size (não-pendentes)
+const first = ref(0); // offset (não-pendentes)
 const loading = ref(false);
 
+// ---------- estados pendentes (atividades recentes)
+const audioFilesPending = ref([]);
+const totalPending = ref(0); // total (pendentes)
+const rowsPending = ref(20); // page size (pendentes)
+const firstPending = ref(0); // offset (pendentes)
+const loadingPending = ref(false);
+
+// (se quiser manter o feed fake/WS à esquerda, deixei aqui)
 const customers1 = ref(cust1);
 
+// ---------- helpers ----------
 function getSeverity(status) {
     switch ((status || '').toLowerCase()) {
         case 'angry':
@@ -24,7 +38,7 @@ function getSeverity(status) {
         case 'sad':
             return 'info';
         case 'desgosto':
-            return 'warning'; // em PrimeVue é 'warning'
+            return 'warning';
         case 'tristeza':
             return null;
         default:
@@ -32,40 +46,94 @@ function getSeverity(status) {
     }
 }
 
-async function getAllAudios(limit = rows.value, offset = first.value) {
+// ---------- busca combinada (uma função, duas requisições) ----------
+async function refreshAudios(
+    pLimit = rowsPending.value,
+    pOffset = firstPending.value, // pendentes
+    nLimit = rows.value,
+    nOffset = first.value // não-pendentes
+) {
     loading.value = true;
-    const response = await dataBack.getAudios('token', limit, offset);
-    if (response.ok) {
-        const json = await response.json().catch(() => ({}));
+    loadingPending.value = true;
+    try {
+        const [respPending, respAll] = await Promise.all([
+            // only_pending = true  -> Atividades Recentes
+            dataBack.getAudios('token', pLimit, pOffset, true),
+            // only_pending = false -> Tabela principal
+            dataBack.getAudios('token', nLimit, nOffset, false)
+        ]);
 
-        // aceita { items, total } e garante número
-        const items = Array.isArray(json) ? json : (json.items ?? []);
-        const t = Array.isArray(json) ? json.length : json.totalRecords;
-
-        audioFiles.value = items;
-
-        // só atualiza se vier um número válido; nunca zera por engano
-        const n = Number(t);
-        if (Number.isFinite(n) && n >= 0) {
-            total.value = n;
+        // --- pendentes ---
+        if (respPending.ok) {
+            const jsonP = await respPending.json().catch(() => ({}));
+            const itemsP = Array.isArray(jsonP) ? jsonP : (jsonP.items ?? []);
+            const tP = Array.isArray(jsonP) ? jsonP.length : jsonP.totalRecords;
+            audioFilesPending.value = itemsP;
+            const nP = Number(tP);
+            if (Number.isFinite(nP) && nP >= 0) totalPending.value = nP;
+        } else {
+            console.error('Erro (pendentes):', respPending.status);
         }
-    } else {
-        console.error('Erro:', response.status);
+
+        // --- não-pendentes (principal) ---
+        if (respAll.ok) {
+            const jsonN = await respAll.json().catch(() => ({}));
+            const itemsN = Array.isArray(jsonN) ? jsonN : (jsonN.items ?? []);
+            const tN = Array.isArray(jsonN) ? jsonN.length : jsonN.totalRecords;
+            audioFiles.value = itemsN;
+            const nN = Number(tN);
+            if (Number.isFinite(nN) && nN >= 0) total.value = nN;
+        } else {
+            console.error('Erro (principal):', respAll.status);
+        }
+    } finally {
+        loading.value = false;
+        loadingPending.value = false;
     }
-    loading.value = false;
 }
 
+// paginação principal (não-pendentes)
 function onPage(e) {
-    // PrimeVue passa: e.first (offset), e.rows (limit), e.page
     first.value = e.first;
     rows.value = e.rows;
-    getAllAudios(e.rows, e.first);
+    refreshAudios(rowsPending.value, firstPending.value, e.rows, e.first);
 }
 
+// paginação pendentes (atividades recentes)
+function onPagePending(e) {
+    firstPending.value = e.first;
+    rowsPending.value = e.rows;
+    refreshAudios(e.rows, e.first, rows.value, first.value);
+}
+
+// refresh manual
 function handleButtonClick() {
-    getAllAudios(); // recarrega a página atual
+    refreshAudios();
 }
 
+async function detailStatus(audioId) {
+    const response = await dataBack.uploadStatus('token', audioId);
+    if (response.ok) {
+        const json = await response.json().catch(() => ({}));
+        toast.add({
+            severity: 'info',
+            summary: `Detalhes do Áudio ID ${audioId}`,
+            detail: JSON.stringify(json, null, 2),
+            life: 8000,
+            sticky: true
+        });
+    } else {
+        console.error('Erro ao buscar detalhes do áudio:', response.status);
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao buscar detalhes',
+            detail: `Status ${response.status}`,
+            life: 4000
+        });
+    }
+}
+
+// download .wav
 async function downloadAudio(audioId) {
     const response = await dataBack.downloadAudioById('token', audioId);
     if (response.ok) {
@@ -73,7 +141,7 @@ async function downloadAudio(audioId) {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `audio_${audioId}.wav`; // ou outro nome adequado
+        a.download = `audio_${audioId}.wav`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -82,7 +150,84 @@ async function downloadAudio(audioId) {
         console.error('Erro ao baixar áudio:', response.status);
     }
 }
-// WS (mantive seu código)
+
+// upload com toast 409 (já cadastrado)
+async function onUpload(event) {
+    try {
+        const file = event?.files?.[0];
+        if (!file) return;
+
+        const res = await dataBack.saveAudio('token', file);
+        if (res.status === 409) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Áudio já cadastrado',
+                detail: 'Este arquivo já existe no banco (SHA-256 duplicado).',
+                life: 4000
+            });
+            return;
+        }
+        if (!(res.status === 200 || res.status === 201)) {
+            console.error('Falha no upload:', res.status);
+            toast.add({
+                severity: 'error',
+                summary: 'Falha no upload',
+                detail: `Status ${res.status}`,
+                life: 4000
+            });
+            return;
+        }
+
+        toast.add({
+            severity: 'success',
+            summary: 'Upload concluído',
+            detail: 'Áudio enviado com sucesso.',
+            life: 3000
+        });
+
+        // recarrega mantendo as páginas atuais
+        await refreshAudios();
+    } finally {
+        event?.options?.clear?.(); // limpa o FileUpload
+    }
+}
+
+// confirmação de exclusão
+function confirmDelete(row) {
+    confirm.require({
+        message: `Tem certeza que deseja excluir este áudio?\n${row.rel_path || row.id}`,
+        header: 'Confirmação',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Excluir',
+        acceptClass: 'p-button-danger',
+        accept: () => deleteAudio(row.id)
+    });
+}
+
+// exclusão
+async function deleteAudio(audioId) {
+    const response = await dataBack.deleteAudio('token', audioId);
+    if (response.status === 200 || response.status === 204) {
+        toast.add({
+            severity: 'success',
+            summary: 'Áudio excluído',
+            detail: `O áudio de ID ${audioId} foi excluído com sucesso.`,
+            life: 4000
+        });
+        await refreshAudios(); // recarrega listas
+    } else {
+        console.error('Erro ao excluir áudio:', response.status);
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao excluir áudio',
+            detail: `Não foi possível excluir o áudio de ID ${audioId}.`,
+            life: 4000
+        });
+    }
+}
+
+// WebSocket (mantido)
 watch(
     msgs,
     (list) => {
@@ -104,23 +249,68 @@ watch(
     },
     { deep: true }
 );
-
+function nameBeforeWav(relPath) {
+    const m = (relPath || '').match(/[^/\\]+(?=\.wav$)/i);
+    return m ? m[0] : '';
+}
 // primeiro carregamento
-getAllAudios();
+refreshAudios();
+
+/* --- novo estado para o player --- */
+const audioDialogVisible = ref(false);
+const currentAudioSrc = ref(null);
+const currentAudioName = ref('');
+
+/* limpa o blob url quando fechar */
+function revokeAudioUrl() {
+    if (currentAudioSrc.value) {
+        URL.revokeObjectURL(currentAudioSrc.value);
+        currentAudioSrc.value = null;
+    }
+}
+
+/* abre o dialog e carrega o blob via DataBackService (usa Authorization) */
+async function openAudioDialog(row) {
+    try {
+        revokeAudioUrl();
+        currentAudioName.value = nameBeforeWav(row.rel_path) || `audio_${row.id}`;
+        currentAudioSrc.value = await dataBack.getAudioStreamUrl('token', row.id);
+        audioDialogVisible.value = true;
+    } catch (e) {
+        toast.add({
+            severity: 'error',
+            summary: 'Falha ao carregar áudio',
+            detail: String(e?.message || e),
+            life: 5000
+        });
+        console.error(e);
+    }
+}
+
+/* ao fechar */
+function onHideAudioDialog() {
+    audioDialogVisible.value = false;
+    revokeAudioUrl();
+}
+
+onBeforeUnmount(revokeAudioUrl);
 </script>
 
 <template>
+    <Toast />
+    <ConfirmDialog />
+
     <div class="grid grid-cols-12 gap-4 p-4 h-full">
+        <!-- Lateral esquerda: Upload + Atividades Recentes (PENDENTES) -->
         <aside class="col-span-3 flex flex-col gap-4">
             <div class="card mb-2">
                 <div class="col-span-full lg:col-span-6">
                     <div class="card">
                         <div class="font-semibold text-xl mb-4">Upload de Áudio</div>
-                        <!-- @uploader="onUpload" -->
                         <FileUpload
-                            name="demo[]"
-                            :multiple="true"
-                            accept="image/*"
+                            name="file"
+                            :multiple="false"
+                            accept="audio/wav, audio/*"
                             :maxFileSize="1000000"
                             customUpload
                             chooseLabel="Selecionar"
@@ -129,40 +319,63 @@ getAllAudios();
                             chooseIcon="pi pi-upload text-xl"
                             uploadIcon="pi pi-cloud-upload text-xl"
                             cancelIcon="pi pi-ban text-xl"
-                            D
+                            @uploader="onUpload"
                         />
                     </div>
                 </div>
             </div>
+
             <div class="card flex-1">
                 <div class="font-semibold text-base mb-2">Atividades Recentes</div>
+
                 <DataTable
-                    :value="customers1"
+                    :value="audioFilesPending"
+                    :lazy="true"
+                    :loading="loadingPending"
                     :paginator="true"
-                    :rows="20"
+                    :rows="rowsPending"
+                    :first="firstPending"
+                    :rowsPerPageOptions="[10, 15, 20, 25, 30]"
+                    :totalRecords="totalPending"
                     dataKey="id"
                     :resizableColumns="true"
                     :rowHover="true"
                     showGridlines
+                    @page="onPagePending"
                     paginator
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    currentPageReportTemplate="{first} to {last} of {totalRecords}"
+                    currentPageReportTemplate="{first} a {last} de {totalRecords}"
                 >
-                    <template #empty> No customers found. </template>
-                    <template #loading> Loading customers data. Please wait. </template>
-                    <Column field="name" header="Nome" style="min-width: 12rem">
-                        <template #body="{ data }"> {{ data.id }} </template>
+                    <template #empty> Nenhum áudio pendente. </template>
+                    <template #loading> Carregando pendentes... </template>
+                    <template #header>
+                        <div class="col-12 mb-2 m-0 p-0 mt-2">
+                            <h4 class="text-center mt-2 m-0">{{ totalPending }} {{ totalPending === 1 ? 'resultado' : 'resultados' }}.</h4>
+                        </div>
+                    </template>
+
+                    <Column field="rel_path" header="Nome" style="min-width: 12rem">
+                        <template #body="{ data }">
+                            {{ nameBeforeWav(data.rel_path) }}
+                        </template>
                     </Column>
-                    <Column header="Dados" filterField="Data" dataType="date"> </Column>
-                    <Column header="Ações" filterField="balance" dataType="numeric"> </Column>
+
+                    <Column header="Ações" style="min-width: 10rem">
+                        <template #body="{ data }">
+                            <Button class="p-button-rounded" icon="pi pi-send" severity="info" v-tooltip.top="'Processar'" style="width: 30px; height: 30px" @click="handleButtonClick" />
+                            <Button class="p-button-rounded ml-2" icon="pi pi-trash" severity="danger" v-tooltip.top="'Excluir'" style="width: 30px; height: 30px" @click="confirmDelete(data)" />
+                        </template>
+                    </Column>
                 </DataTable>
             </div>
         </aside>
 
+        <!-- Direita: Tabela principal (NÃO-PENDENTES) -->
         <main class="col-span-9">
             <div class="card h-full flex flex-col">
                 <div class="flex-1 flex flex-col">
                     <div class="font-semibold text-xl mb-4">Tabela de Dados</div>
+
                     <DataTable
                         :value="audioFiles"
                         :lazy="true"
@@ -177,18 +390,24 @@ getAllAudios();
                         :rowHover="true"
                         showGridlines
                         @page="onPage"
+                        paginator
+                        paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+                        currentPageReportTemplate="{first} a {last} de {totalRecords}"
                     >
                         <template #empty> Nenhum áudio encontrado. </template>
-                        <template #loading> <ProgressSpinner strokeWidth="4" animationDuration="2s" class="w-full h-full" fill="transparent" /> </template>
-                        <template #header
-                            ><div class="col-12 mb-2 m-0 p-0 mt-2">
+                        <template #loading>
+                            <ProgressSpinner strokeWidth="4" animationDuration="2s" class="w-full h-full" fill="transparent" />
+                        </template>
+                        <template #header>
+                            <div class="col-12 mb-2 m-0 p-0 mt-2">
                                 <h4 class="text-center mt-2 m-0">{{ total }} {{ total === 1 ? 'resultado' : 'resultados' }}.</h4>
-                            </div></template
-                        >
+                            </div>
+                        </template>
+
                         <Column field="rel_path" header="Nome" style="min-width: 12rem" />
                         <Column header="Dados" field="confidence_score" style="min-width: 10rem" />
                         <Column header="Status" field="processing_status" style="min-width: 10rem" />
-                        <Column header="Emoção" field="predicted_emotion" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
+                        <Column field="predicted_emotion" header="Emoção" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
                             <template #body="{ data }">
                                 <Tag :value="data.predicted_emotion ?? '—'" :severity="getSeverity(data.predicted_emotion)" />
                             </template>
@@ -201,13 +420,16 @@ getAllAudios();
                                         'pi-check-circle text-green-500': data.processing_status === 'completed',
                                         'pi-times-circle text-red-500': data.processing_status !== 'completed'
                                     }"
-                                ></i>
+                                />
                             </template>
                         </Column>
-                        <Column header="Ações" bodyClass="text-center" style="min-width: 8rem">
+
+                        <Column header="Ações" bodyClass="text-center" style="min-width: 10rem">
                             <template #body="{ data }">
-                                <Button class="p-button-rounded" icon="pi pi-refresh" severity="success" style="width: 30px; height: 30px" @click="handleButtonClick" />
-                                <Button class="p-button-rounded ml-1" icon="pi pi-download" severity="info" style="width: 30px; height: 30px" @click="downloadAudio(data.id)" />
+                                <Button class="p-button-rounded" icon="pi pi-play" severity="secondary" v-tooltip.top="'Ouvir'" style="width: 30px; height: 30px" @click="openAudioDialog(data)" />
+                                <Button class="p-button-rounded" icon="pi pi-search" severity="secondary" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="detailStatus(data.id)" />
+                                <Button class="p-button-rounded" icon="pi pi-ellipsis-h" severity="success" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="handleButtonClick" />
+                                <Button class="p-button-rounded ml-1" icon="pi pi-download" severity="info" v-tooltip.top="'Baixar .wav'" style="width: 30px; height: 30px" @click="downloadAudio(data.id)" />
                             </template>
                         </Column>
                     </DataTable>
@@ -215,7 +437,15 @@ getAllAudios();
             </div>
         </main>
     </div>
+    <Dialog v-model:visible="audioDialogVisible" modal :draggable="false" header="Pré-escuta do áudio" :style="{ width: '36rem', maxWidth: '95vw' }" @hide="onHideAudioDialog">
+        <div class="flex flex-col gap-3">
+            <div class="text-sm opacity-80 truncate">{{ currentAudioName }}</div>
+            <audio v-if="currentAudioSrc" :src="currentAudioSrc" controls style="width: 100%"></audio>
+            <div v-else class="text-sm">Carregando áudio…</div>
+        </div>
+    </Dialog>
 </template>
+
 <style scoped>
 .card {
     padding: 1rem;
