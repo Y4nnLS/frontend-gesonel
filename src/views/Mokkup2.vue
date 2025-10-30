@@ -269,6 +269,44 @@ function revokeAudioUrl() {
     }
 }
 
+// processar (analisar) 1 áudio já existente
+async function analyzeAudioById(audioId) {
+    try {
+        const res = await dataBack.analyzeAudio('token', audioId);
+        if (res.status === 200 || res.status === 202) {
+            toast.add({
+                severity: 'success',
+                summary: 'Análise iniciada',
+                detail: `Áudio ${audioId} enviado para análise.`,
+                life: 4000
+            });
+        } else if (res.status === 409) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Já em análise',
+                detail: 'Este áudio já foi enfileirado/está em processamento.',
+                life: 4000
+            });
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Falha ao analisar',
+                detail: `Status ${res.status}`,
+                life: 5000
+            });
+        }
+        await refreshAudios(); // atualiza as duas listas
+    } catch (e) {
+        console.error(e);
+        toast.add({
+            severity: 'error',
+            summary: 'Erro na requisição',
+            detail: String(e?.message || e),
+            life: 6000
+        });
+    }
+}
+
 /* abre o dialog e carrega o blob via DataBackService (usa Authorization) */
 async function openAudioDialog(row) {
     try {
@@ -301,7 +339,7 @@ onBeforeUnmount(revokeAudioUrl);
     <ConfirmDialog />
 
     <div class="grid grid-cols-12 gap-4 p-4 h-full">
-        <!-- Lateral esquerda: Upload + Atividades Recentes (PENDENTES) -->
+        <!-- Lateral esquerda: Upload Atividades Recentes (PENDENTES) -->
         <aside class="col-span-3 flex flex-col gap-4">
             <div class="card mb-2">
                 <div class="col-span-full lg:col-span-6">
@@ -362,7 +400,7 @@ onBeforeUnmount(revokeAudioUrl);
 
                     <Column header="Ações" style="min-width: 10rem">
                         <template #body="{ data }">
-                            <Button class="p-button-rounded" icon="pi pi-send" severity="info" v-tooltip.top="'Processar'" style="width: 30px; height: 30px" @click="handleButtonClick" />
+                            <Button class="p-button-rounded" icon="pi pi-send" severity="info" v-tooltip.top="'Processar'" style="width: 30px; height: 30px" @click="analyzeAudioById(data.id)" />
                             <Button class="p-button-rounded ml-2" icon="pi pi-trash" severity="danger" v-tooltip.top="'Excluir'" style="width: 30px; height: 30px" @click="confirmDelete(data)" />
                         </template>
                     </Column>
@@ -428,7 +466,7 @@ onBeforeUnmount(revokeAudioUrl);
                             <template #body="{ data }">
                                 <Button class="p-button-rounded" icon="pi pi-play" severity="secondary" v-tooltip.top="'Ouvir'" style="width: 30px; height: 30px" @click="openAudioDialog(data)" />
                                 <Button class="p-button-rounded" icon="pi pi-search" severity="secondary" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="detailStatus(data.id)" />
-                                <Button class="p-button-rounded" icon="pi pi-ellipsis-h" severity="success" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="handleButtonClick" />
+                                <Button class="p-button-rounded" icon="pi pi-send" severity="success" v-tooltip.top="'Analisar este áudio'" style="width: 30px; height: 30px" @click="analyzeAudioById(data.id)" />
                                 <Button class="p-button-rounded ml-1" icon="pi pi-download" severity="info" v-tooltip.top="'Baixar .wav'" style="width: 30px; height: 30px" @click="downloadAudio(data.id)" />
                             </template>
                         </Column>

@@ -150,4 +150,16 @@ export async function getAudioStreamUrl(authToken, audioId) {
     return URL.createObjectURL(blob); // blob:...
 }
 
+export async function analyzeAudio(authToken, audioId) {
+    const url = `${global.backendUrl()}/analyzeAudio`;
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            Authorization: 'Bearer ' + authToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ audio_id: audioId }) // se o backend esperar outro nome (ex: "id"), troque aqui
+    });
+}
+
 // #endregion ======================================================= AUDIOS ======================================================
