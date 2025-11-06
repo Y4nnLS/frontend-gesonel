@@ -1,6 +1,6 @@
 <template>
     <!-- Precision -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <div class="col-span-12 lg:col-span-6 xl:col-span-4">
         <div class="card mb-0">
             <div class="flex justify-between mb-4">
                 <div>
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Recall -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <div class="col-span-12 lg:col-span-6 xl:col-span-4">
         <div class="card mb-0">
             <div class="flex justify-between mb-4">
                 <div>
@@ -34,7 +34,7 @@
     </div>
 
     <!-- F1-score -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <div class="col-span-12 lg:col-span-6 xl:col-span-4">
         <div class="card mb-0">
             <div class="flex justify-between mb-4">
                 <div>
@@ -51,11 +51,11 @@
     </div>
 
     <!-- Validação Cruzada -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <!-- <div class="col-span-12 lg:col-span-6 xl:col-span-3">
         <div class="card mb-0">
             <div class="flex justify-between mb-4">
                 <div>
-                    <span class="block text-muted-color font-medium mb-4">Validação Cruzada</span>
+                    <span class="block text-muted-color font-medium mb-4">Support</span>
                     <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">92%</div>
                 </div>
                 <div class="flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-border" style="width: 2.5rem; height: 2.5rem">
@@ -65,5 +65,5 @@
             <span class="text-primary font-medium">k-fold = 5</span>
             <span class="text-muted-color">média de acurácia</span>
         </div>
-    </div>
+    </div> -->
 </template>

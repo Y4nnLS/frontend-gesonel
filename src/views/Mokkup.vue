@@ -321,19 +321,17 @@ function cellStyle({ data, column }) {
     <Divider class="p-0 m-0" />
     <div class="grid grid-cols-12 gap-4 mt-4">
         <!-- Container dos Gráficos - 2x2 -->
-        <div class="col-span-12 grid grid-cols-2 gap-4">
-            <!-- Gráfico Linear -->
+        <!-- <div class="col-span-12 grid grid-cols-2 gap-4">
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">
                 <div class="font-semibold text-xl mb-2">Evolução da Acurácia por Época</div>
                 <Chart type="line" :data="lineData" :options="lineOptions"></Chart>
             </div>
 
-            <!-- Gráfico de Barras -->
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">
                 <div class="font-semibold text-xl mb-2">Comparação de Acurácia: Treino vs. Teste</div>
                 <Chart type="bar" :data="barData" :options="barOptions"></Chart>
             </div>
-        </div>
+        </div> -->
         <div class="col-span-12 grid grid-cols-3 gap-4">
             <!-- Gráfico Radar -->
             <div class="card p-4 bg-white shadow-md flex flex-col items-center">

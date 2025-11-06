@@ -158,7 +158,7 @@ export async function analyzeAudio(authToken, audioId) {
             Authorization: 'Bearer ' + authToken,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ audio_id: audioId }) // se o backend esperar outro nome (ex: "id"), troque aqui
+        body: JSON.stringify({ audio_id: audioId, modelos: ['all'] })
     });
 }
 

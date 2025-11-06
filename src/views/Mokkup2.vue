@@ -2,7 +2,7 @@
 /* eslint-disable */
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useWsAudioUpdates } from '../layout/composables/useWsAudioUpdates.js';
 import * as dataBack from '../service/DataBackService.js';
 import cust1 from './cust1.json';
@@ -261,6 +261,31 @@ const audioDialogVisible = ref(false);
 const currentAudioSrc = ref(null);
 const currentAudioName = ref('');
 
+const tableRows = computed(() =>
+    audioFiles.value.flatMap((a) => [
+        {
+            __rowid: `${a.id}-1d`,
+            audio_id: a.id,
+            rel_path: a.rel_path,
+            model: '1D',
+            accuracy: a.model1d_confidence_score ?? null,
+            emotion: a.model1d_predicted_emotion ?? null,
+            processing_status: a.processing_status,
+            _raw: a
+        },
+        {
+            __rowid: `${a.id}-mm`,
+            audio_id: a.id,
+            rel_path: a.rel_path,
+            model: 'Multimodal',
+            accuracy: a.mm_confidence_score ?? null,
+            emotion: a.mm_predicted_emotion ?? null,
+            processing_status: a.processing_status,
+            _raw: a // se precisar de mais campos
+        }
+    ])
+);
+
 /* limpa o blob url quando fechar */
 function revokeAudioUrl() {
     if (currentAudioSrc.value) {
@@ -415,7 +440,9 @@ onBeforeUnmount(revokeAudioUrl);
                     <div class="font-semibold text-xl mb-4">Tabela de Dados</div>
 
                     <DataTable
-                        :value="audioFiles"
+                        :value="tableRows"
+                        rowGroupMode="rowspan"
+                        groupRowsBy="rel_path"
                         :lazy="true"
                         :loading="loading"
                         :paginator="true"
@@ -443,11 +470,13 @@ onBeforeUnmount(revokeAudioUrl);
                         </template>
 
                         <Column field="rel_path" header="Nome" style="min-width: 12rem" />
-                        <Column header="Dados" field="confidence_score" style="min-width: 10rem" />
+                        <Column field="model" header="Modelo" style="min-width: 12rem" />
+                        <Column header="Acurácia" field="accuracy" style="min-width: 10rem" />
                         <Column header="Status" field="processing_status" style="min-width: 10rem" />
-                        <Column field="predicted_emotion" header="Emoção" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
+                        <Column field="emotion" header="Emoção" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
                             <template #body="{ data }">
-                                <Tag :value="data.predicted_emotion ?? '—'" :severity="getSeverity(data.predicted_emotion)" />
+                                <!-- <pre>{{ data }}</pre> -->
+                                <Tag :value="data.emotion ?? '—'" :severity="getSeverity(data.predicted_emotion)" />
                             </template>
                         </Column>
                         <Column field="processing_status" header="Analisado" style="min-width: 8rem" bodyClass="text-center">
@@ -465,9 +494,9 @@ onBeforeUnmount(revokeAudioUrl);
                         <Column header="Ações" bodyClass="text-center" style="min-width: 10rem">
                             <template #body="{ data }">
                                 <Button class="p-button-rounded" icon="pi pi-play" severity="secondary" v-tooltip.top="'Ouvir'" style="width: 30px; height: 30px" @click="openAudioDialog(data)" />
-                                <Button class="p-button-rounded" icon="pi pi-search" severity="secondary" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="detailStatus(data.id)" />
-                                <Button class="p-button-rounded" icon="pi pi-send" severity="success" v-tooltip.top="'Analisar este áudio'" style="width: 30px; height: 30px" @click="analyzeAudioById(data.id)" />
-                                <Button class="p-button-rounded ml-1" icon="pi pi-download" severity="info" v-tooltip.top="'Baixar .wav'" style="width: 30px; height: 30px" @click="downloadAudio(data.id)" />
+                                <Button class="p-button-rounded" icon="pi pi-search" severity="secondary" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="detailStatus(data.audio_id)" />
+                                <Button class="p-button-rounded" icon="pi pi-send" severity="success" v-tooltip.top="'Analisar este áudio'" style="width: 30px; height: 30px" @click="analyzeAudioById(data.audio_id)" />
+                                <Button class="p-button-rounded ml-1" icon="pi pi-download" severity="info" v-tooltip.top="'Baixar .wav'" style="width: 30px; height: 30px" @click="downloadAudio(data.audio_id)" />
                             </template>
                         </Column>
                     </DataTable>
