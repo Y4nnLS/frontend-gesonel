@@ -299,6 +299,16 @@ function cellStyle({ data, column }) {
         justifyContent: 'center'
     };
 }
+const json_1d_model = {
+    accuracy: 1,
+    recall: 2,
+    f1_score: 3
+};
+const json_mm_model = {
+    accuracy: 666,
+    recall: 420,
+    f1_score: 37
+};
 </script>
 
 <template>
@@ -314,8 +324,25 @@ function cellStyle({ data, column }) {
         </div>
     </div> -->
 
-    <div class="grid mt-4 grid-cols-12 gap-4 items-center">
-        <StatsWidget />
+    <div class="grid items-center">
+        <Tabs value="0">
+            <TabList>
+                <Tab value="0">1D</Tab>
+                <Tab value="1">MultiModal</Tab>
+            </TabList>
+            <TabPanels>
+                <TabPanel value="0">
+                    <div class="grid mt-4 grid-cols-12 gap-4 items-center">
+                        <StatsWidget :data="json_1d_model" />
+                    </div>
+                </TabPanel>
+                <TabPanel value="1">
+                    <div class="grid mt-4 grid-cols-12 gap-4 items-center">
+                        <StatsWidget :data="json_mm_model" />
+                    </div>
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
     </div>
 
     <Divider class="p-0 m-0" />

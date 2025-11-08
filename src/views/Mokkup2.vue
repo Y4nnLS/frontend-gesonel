@@ -45,6 +45,37 @@ function getSeverity(status) {
             return null;
     }
 }
+// ---------- EMOÇÕES: normalização + metadados (ícone + classe + rótulo) ----------
+function normalizeEmotion(raw) {
+    const e = String(raw || '')
+        .trim()
+        .toLowerCase();
+    // sinônimos PT/EN que já vi no teu fluxo:
+    if (['desgosto', 'disgust'].includes(e)) return 'disgust';
+    if (['tristeza', 'sad', 'sadness'].includes(e)) return 'sadness';
+    if (['feliz', 'alegria', 'happy'].includes(e)) return 'happy';
+    if (['medo', 'fear'].includes(e)) return 'fear';
+    if (['raiva', 'angry'].includes(e)) return 'angry';
+    if (['surpresa', 'surprise'].includes(e)) return 'surprise';
+    if (['neutro', 'neutral'].includes(e)) return 'neutral';
+    return e || null;
+}
+
+// Meta por emoção: ícone PrimeIcons + classe para cor + label bonito
+const EMOTION_META = {
+    angry: { icon: 'pi pi-bolt', cls: 'emo-angry', label: 'angry' },
+    disgust: { icon: 'pi pi-ban', cls: 'emo-disgust', label: 'disgust' },
+    fear: { icon: 'pi pi-exclamation-triangle', cls: 'emo-fear', label: 'fear' },
+    happy: { icon: 'pi pi-smile', cls: 'emo-happy', label: 'happy' },
+    neutral: { icon: 'pi pi-meh', cls: 'emo-neutral', label: 'neutral' },
+    sadness: { icon: 'pi pi-minus-circle', cls: 'emo-sadness', label: 'sadness' },
+    surprise: { icon: 'pi pi-bell', cls: 'emo-surprise', label: 'surprise' }
+};
+
+function getEmotionMeta(raw) {
+    const key = normalizeEmotion(raw);
+    return key && EMOTION_META[key] ? EMOTION_META[key] : null;
+}
 
 // ---------- busca combinada (uma função, duas requisições) ----------
 async function refreshAudios(
@@ -336,8 +367,8 @@ async function analyzeAudioById(audioId) {
 async function openAudioDialog(row) {
     try {
         revokeAudioUrl();
-        currentAudioName.value = nameBeforeWav(row.rel_path) || `audio_${row.id}`;
-        currentAudioSrc.value = await dataBack.getAudioStreamUrl('token', row.id);
+        currentAudioName.value = nameBeforeWav(row.rel_path) || `audio_${row.audio_id}`;
+        currentAudioSrc.value = await dataBack.getAudioStreamUrl('token', row.audio_id);
         audioDialogVisible.value = true;
     } catch (e) {
         toast.add({
@@ -444,6 +475,8 @@ onBeforeUnmount(revokeAudioUrl);
                         rowGroupMode="rowspan"
                         groupRowsBy="rel_path"
                         :lazy="true"
+                        stripedRows
+                        rowHover
                         :loading="loading"
                         :paginator="true"
                         :rows="rows"
@@ -469,16 +502,25 @@ onBeforeUnmount(revokeAudioUrl);
                             </div>
                         </template>
 
-                        <Column field="rel_path" header="Nome" style="min-width: 12rem" />
+                        <Column field="rel_path" header="Nome" style="min-width: 12rem">
+                            <template #body="{ data }">
+                                {{ nameBeforeWav(data.rel_path) }}
+                            </template>
+                        </Column>
                         <Column field="model" header="Modelo" style="min-width: 12rem" />
-                        <Column header="Acurácia" field="accuracy" style="min-width: 10rem" />
+                        <Column header="Confiabilidade" field="accuracy" style="min-width: 10rem" />
                         <Column header="Status" field="processing_status" style="min-width: 10rem" />
                         <Column field="emotion" header="Emoção" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
                             <template #body="{ data }">
-                                <!-- <pre>{{ data }}</pre> -->
-                                <Tag :value="data.emotion ?? '—'" :severity="getSeverity(data.predicted_emotion)" />
+                                <template v-if="getEmotionMeta(data.emotion)">
+                                    <Tag :value="getEmotionMeta(data.emotion).label" :icon="getEmotionMeta(data.emotion).icon" :class="['emotion-tag', getEmotionMeta(data.emotion).cls]" />
+                                </template>
+                                <template v-else>
+                                    <Tag value="—" class="emotion-tag emo-unknown" />
+                                </template>
                             </template>
                         </Column>
+
                         <Column field="processing_status" header="Analisado" style="min-width: 8rem" bodyClass="text-center">
                             <template #body="{ data }">
                                 <i
@@ -517,5 +559,59 @@ onBeforeUnmount(revokeAudioUrl);
 .card {
     padding: 1rem;
     margin-bottom: 0;
+}
+/* ===== Tags de emoção (cores customizadas) ===== */
+:deep(.emotion-tag) {
+    border: 0;
+    font-weight: 600;
+    text-transform: lowercase;
+}
+
+/* Angry — vermelho */
+:deep(.emotion-tag.emo-angry) {
+    background: #fee2e2; /* red-100 */
+    color: #991b1b; /* red-800 */
+}
+
+/* Disgust — verde oliva */
+:deep(.emotion-tag.emo-disgust) {
+    background: #e7f3d1; /* olive-ish */
+    color: #3f6212; /* lime-800 approx */
+}
+
+/* Fear — âmbar/alerta */
+:deep(.emotion-tag.emo-fear) {
+    background: #fef3c7; /* amber-100 */
+    color: #92400e; /* amber-800 */
+}
+
+/* Happy — verde sucesso */
+:deep(.emotion-tag.emo-happy) {
+    background: #dcfce7; /* green-100 */
+    color: #166534; /* green-800 */
+}
+
+/* Neutral — cinza */
+:deep(.emotion-tag.emo-neutral) {
+    background: #f3f4f6; /* gray-100 */
+    color: #374151; /* gray-700 */
+}
+
+/* Sadness — azul frio */
+:deep(.emotion-tag.emo-sadness) {
+    background: #dbeafe; /* blue-100 */
+    color: #1e40af; /* blue-800 */
+}
+
+/* Surprise — roxo/acentuado */
+:deep(.emotion-tag.emo-surprise) {
+    background: #ede9fe; /* violet-100 */
+    color: #5b21b6; /* violet-800 */
+}
+
+/* Desconhecido */
+:deep(.emotion-tag.emo-unknown) {
+    background: #e5e7eb; /* gray-200 */
+    color: #374151; /* gray-700 */
 }
 </style>
