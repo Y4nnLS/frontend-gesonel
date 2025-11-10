@@ -1,54 +1,77 @@
 <script setup>
 /* eslint-disable */
 import StatsWidget from '@/components/dashboard/StatsWidget.vue';
-import { ref } from 'vue';
+import { useLayout } from '@/layout/composables/layout';
+import { onMounted, ref, watch } from 'vue';
 
+// ====== layout/composables ======
+const { getPrimary, getSurface, isDarkTheme } = useLayout();
+
+// ====== helpers de estado demo ======
 const teste = ref(0);
 const inputs = Array.from({ length: 10 }, () => ref(''));
-
 function clicou() {
     teste.value++;
 }
 
-import { useLayout } from '@/layout/composables/layout';
-import { onMounted, watch } from 'vue';
-
-const { getPrimary, getSurface, isDarkTheme } = useLayout();
+// ====== Chart refs ======
 const lineData = ref(null);
 const pieData = ref(null);
+const pieDataMM = ref(null);
 const polarData = ref(null);
 const barData = ref(null);
-const radarData1 = ref(null);
-const radarData2 = ref(null);
+
+const radarData1 = ref(null); // 1D
+const radarDataMM = ref(null); // MultiModal
+
 const lineOptions = ref(null);
 const pieOptions = ref(null);
 const polarOptions = ref(null);
 const barOptions = ref(null);
-const radarOptions = ref(null);
+const radarOptions = ref(null); // usado por ambos (escala em %)
 
-const predictedLabels = ['Felicidade', 'Tristeza', 'Raiva', 'Medo', 'Neutro', 'Surpresa', 'Nojo'];
+// ====== Rótulos ======
+const predictedLabels = ['Raiva', 'Nojo', 'Medo', 'Felicidade', 'Neutro', 'Tristeza', 'Surpresa'];
 
-// Matriz de confusão com as 7 emoções
+// ====== MATRIZ DE CONFUSÃO (1D) ======
 const confusionMatrix = ref([
-    { trueLabel: 'Felicidade', Felicidade: 50, Tristeza: 2, Raiva: 1, Medo: 0, Neutro: 2, Surpresa: 1, Nojo: 0 },
-    { trueLabel: 'Tristeza', Felicidade: 3, Tristeza: 45, Raiva: 0, Medo: 1, Neutro: 1, Surpresa: 2, Nojo: 0 },
-    { trueLabel: 'Raiva', Felicidade: 2, Tristeza: 1, Raiva: 40, Medo: 4, Neutro: 3, Surpresa: 0, Nojo: 1 },
-    { trueLabel: 'Medo', Felicidade: 0, Tristeza: 1, Raiva: 3, Medo: 42, Neutro: 4, Surpresa: 0, Nojo: 2 },
-    { trueLabel: 'Neutro', Felicidade: 1, Tristeza: 2, Raiva: 2, Medo: 3, Neutro: 47, Surpresa: 1, Nojo: 1 },
-    { trueLabel: 'Surpresa', Felicidade: 1, Tristeza: 2, Raiva: 2, Medo: 3, Neutro: 5, Surpresa: 35, Nojo: 2 },
-    { trueLabel: 'Nojo', Felicidade: 1, Tristeza: 2, Raiva: 2, Medo: 3, Neutro: 4, Surpresa: 1, Nojo: 37 }
+    { trueLabel: 'Raiva', Raiva: 1401, Nojo: 117, Medo: 41, Felicidade: 95, Neutro: 22, Tristeza: 15, Surpresa: 37 },
+    { trueLabel: 'Nojo', Raiva: 40, Nojo: 1457, Medo: 29, Felicidade: 24, Neutro: 51, Tristeza: 114, Surpresa: 13 },
+    { trueLabel: 'Medo', Raiva: 11, Nojo: 15, Medo: 1490, Felicidade: 66, Neutro: 9, Tristeza: 95, Surpresa: 42 },
+    { trueLabel: 'Felicidade', Raiva: 80, Nojo: 19, Medo: 112, Felicidade: 1303, Neutro: 96, Tristeza: 39, Surpresa: 79 },
+    { trueLabel: 'Neutro', Raiva: 7, Nojo: 33, Medo: 11, Felicidade: 6, Neutro: 1621, Tristeza: 50, Surpresa: 0 },
+    { trueLabel: 'Tristeza', Raiva: 1, Nojo: 113, Medo: 66, Felicidade: 26, Neutro: 96, Tristeza: 1426, Surpresa: 0 },
+    { trueLabel: 'Surpresa', Raiva: 37, Nojo: 14, Medo: 61, Felicidade: 93, Neutro: 14, Tristeza: 5, Surpresa: 1504 }
 ]);
 
+// ====== MATRIZ DE CONFUSÃO (MultiModal) ======
+const confusionMatrixMM = ref([
+    { trueLabel: 'Raiva', Raiva: 1390, Nojo: 132, Medo: 51, Felicidade: 88, Neutro: 24, Tristeza: 17, Surpresa: 26 },
+    { trueLabel: 'Nojo', Raiva: 38, Nojo: 1422, Medo: 21, Felicidade: 21, Neutro: 48, Tristeza: 162, Surpresa: 16 },
+    { trueLabel: 'Medo', Raiva: 22, Nojo: 24, Medo: 1434, Felicidade: 92, Neutro: 8, Tristeza: 111, Surpresa: 37 },
+    { trueLabel: 'Felicidade', Raiva: 68, Nojo: 22, Medo: 97, Felicidade: 1336, Neutro: 81, Tristeza: 45, Surpresa: 80 },
+    { trueLabel: 'Neutro', Raiva: 6, Nojo: 47, Medo: 9, Felicidade: 97, Neutro: 1615, Tristeza: 40, Surpresa: 0 },
+    { trueLabel: 'Tristeza', Raiva: 3, Nojo: 113, Medo: 83, Felicidade: 35, Neutro: 99, Tristeza: 1395, Surpresa: 0 },
+    { trueLabel: 'Surpresa', Raiva: 24, Nojo: 11, Medo: 54, Felicidade: 107, Neutro: 8, Tristeza: 2, Surpresa: 1522 }
+]);
+
+// ====== KPIs dos widgets ======
+const json_1d_model = { accuracy: 0.8361, recall: 0.8361, f1_score: '0.8360' };
+const json_mm_model = { accuracy: 0.8902, recall: 0.8902, f1_score: 0.8904 };
+
+// ====== init ======
 onMounted(() => {
     setColorOptions();
 });
 
+// ====== charts setup (cores, dados, opções) ======
 function setColorOptions() {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--text-color');
     const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
     const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
 
+    // ---- BAR demo ----
     barData.value = {
         labels: ['A1', 'B1', 'C1', 'A2', 'B2', 'C2'],
         datasets: [
@@ -67,43 +90,19 @@ function setColorOptions() {
         ]
     };
     barOptions.value = {
-        plugins: {
-            legend: {
-                labels: {
-                    fontColor: textColor
-                }
-            }
-        },
+        plugins: { legend: { labels: { color: textColor } } },
         scales: {
-            x: {
-                ticks: {
-                    color: textColorSecondary,
-                    font: {
-                        weight: 500
-                    }
-                },
-                grid: {
-                    display: false,
-                    drawBorder: false
-                }
-            },
-            y: {
-                ticks: {
-                    color: textColorSecondary
-                },
-                grid: {
-                    color: surfaceBorder,
-                    drawBorder: false
-                }
-            }
+            x: { ticks: { color: textColorSecondary, font: { weight: 500 } }, grid: { display: false, drawBorder: false } },
+            y: { ticks: { color: textColorSecondary }, grid: { color: surfaceBorder, drawBorder: false } }
         }
     };
 
-    pieData.value = {
+    // ---- PIE demo (pode ser a distribuição do dataset) ----
+    pieDataMM.value = {
         labels: [...predictedLabels],
         datasets: [
             {
-                data: [20, 15, 25, 30, 10, 18, 12], // valores simulados
+                data: [20, 15, 25, 30, 10, 18, 12],
                 backgroundColor: [
                     documentStyle.getPropertyValue('--p-indigo-500'),
                     documentStyle.getPropertyValue('--p-purple-500'),
@@ -125,155 +124,163 @@ function setColorOptions() {
             }
         ]
     };
-
-    pieOptions.value = {
-        plugins: {
-            legend: {
-                labels: {
-                    usePointStyle: true,
-                    color: textColor
-                }
-            }
-        }
-    };
-
-    lineData.value = {
-        labels: ['Época 1', 'Época 2', 'Época 3', 'Época 4', 'Época 5', 'Época 6', 'Época 7', 'Época 8', 'Época 9', 'Época 10'],
+    pieData.value = {
+        labels: [...predictedLabels],
         datasets: [
             {
-                label: 'Modelo A1',
-                data: [70, 75, 80, 82, 85, 87, 88, 89, 90, 91],
-                fill: false,
-                backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
-                borderColor: documentStyle.getPropertyValue('--p-primary-500'),
-                tension: 0.4
-            },
-            {
-                label: 'Modelo B1',
-                data: [68, 73, 78, 80, 83, 85, 87, 88, 89, 90],
-                fill: false,
-                backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
-                borderColor: documentStyle.getPropertyValue('--p-primary-200'),
-                tension: 0.4
+                data: [20, 15, 25, 30, 10, 18, 12],
+                backgroundColor: [
+                    documentStyle.getPropertyValue('--p-indigo-500'),
+                    documentStyle.getPropertyValue('--p-purple-500'),
+                    documentStyle.getPropertyValue('--p-teal-500'),
+                    documentStyle.getPropertyValue('--p-orange-500'),
+                    documentStyle.getPropertyValue('--p-cyan-500'),
+                    documentStyle.getPropertyValue('--p-yellow-500'),
+                    documentStyle.getPropertyValue('--p-green-500')
+                ],
+                hoverBackgroundColor: [
+                    documentStyle.getPropertyValue('--p-indigo-400'),
+                    documentStyle.getPropertyValue('--p-purple-400'),
+                    documentStyle.getPropertyValue('--p-teal-400'),
+                    documentStyle.getPropertyValue('--p-orange-400'),
+                    documentStyle.getPropertyValue('--p-cyan-400'),
+                    documentStyle.getPropertyValue('--p-yellow-400'),
+                    documentStyle.getPropertyValue('--p-green-400')
+                ]
             }
         ]
     };
+    pieOptions.value = { plugins: { legend: { labels: { usePointStyle: true, color: textColor } } } };
 
+    // ---- LINE demo ----
+    lineData.value = {
+        labels: ['Época 1', 'Época 2', 'Época 3', 'Época 4', 'Época 5', 'Época 6', 'Época 7', 'Época 8', 'Época 9', 'Época 10'],
+        datasets: [
+            { label: 'Modelo A1', data: [70, 75, 80, 82, 85, 87, 88, 89, 90, 91], fill: false, backgroundColor: documentStyle.getPropertyValue('--p-primary-500'), borderColor: documentStyle.getPropertyValue('--p-primary-500'), tension: 0.4 },
+            { label: 'Modelo B1', data: [68, 73, 78, 80, 83, 85, 87, 88, 89, 90], fill: false, backgroundColor: documentStyle.getPropertyValue('--p-primary-200'), borderColor: documentStyle.getPropertyValue('--p-primary-200'), tension: 0.4 }
+        ]
+    };
     lineOptions.value = {
-        plugins: {
-            legend: {
-                labels: {
-                    fontColor: textColor
-                }
-            }
-        },
+        plugins: { legend: { labels: { color: textColor } } },
         scales: {
-            x: {
-                ticks: {
-                    color: textColorSecondary
-                },
-                grid: {
-                    color: surfaceBorder,
-                    drawBorder: false
-                }
-            },
-            y: {
-                ticks: {
-                    color: textColorSecondary
-                },
-                grid: {
-                    color: surfaceBorder,
-                    drawBorder: false
-                }
-            }
+            x: { ticks: { color: textColorSecondary }, grid: { color: surfaceBorder, drawBorder: false } },
+            y: { ticks: { color: textColorSecondary }, grid: { color: surfaceBorder, drawBorder: false } }
         }
     };
 
+    // ---- POLAR demo ----
     polarData.value = {
         datasets: [
             {
                 data: [11, 16, 7, 3],
                 backgroundColor: [documentStyle.getPropertyValue('--p-indigo-500'), documentStyle.getPropertyValue('--p-purple-500'), documentStyle.getPropertyValue('--p-teal-500'), documentStyle.getPropertyValue('--p-orange-500')],
-                label: 'My dataset'
+                label: 'Distribuição de Emoções'
             }
-        ],
-        label: 'Distribuição de Emoções'
+        ]
     };
+    polarOptions.value = { plugins: { legend: { labels: { color: textColor } } }, scales: { r: { grid: { color: surfaceBorder } } } };
 
-    polarOptions.value = {
-        plugins: {
-            legend: {
-                labels: {
-                    color: textColor
-                }
-            }
-        },
-        scales: {
-            r: {
-                grid: {
-                    color: surfaceBorder
-                }
-            }
-        }
-    };
+    // ======================================================
+    // RADAR (1D) — métricas do print, em %
+    // ordem: ['Raiva','Nojo','Medo','Felicidade','Neutro','Tristeza','Surpresa']
+    // ======================================================
+    const precision1D = [89.62, 80.29, 81.99, 79.05, 85.77, 78.77, 90.54];
+    const recall1D = [80.44, 82.29, 82.99, 77.31, 93.04, 80.75, 88.08];
+    const f11D = [84.78, 81.28, 82.48, 78.17, 89.15, 79.74, 89.29];
 
-    radarData2.value = {
-        labels: ['Felicidade', 'Tristeza', 'Raiva', 'Medo', 'Surpresa', 'Nojo', 'Neutro'],
+    radarData1.value = {
+        labels: predictedLabels,
         datasets: [
             {
-                label: 'Modelo A1',
+                label: 'Precisão',
+                data: precision1D,
+                fill: true,
                 borderColor: documentStyle.getPropertyValue('--p-indigo-400'),
                 pointBackgroundColor: documentStyle.getPropertyValue('--p-indigo-400'),
                 pointBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
-                pointHoverBackgroundColor: textColor,
-                pointHoverBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
-                data: [65, 59, 90, 81, 56, 55, 40]
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-indigo-400')
             },
             {
-                label: 'Modelo A2',
+                label: 'Recall',
+                data: recall1D,
+                fill: true,
+                borderColor: documentStyle.getPropertyValue('--p-teal-400'),
+                pointBackgroundColor: documentStyle.getPropertyValue('--p-teal-400'),
+                pointBorderColor: documentStyle.getPropertyValue('--p-teal-400'),
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-teal-400')
+            },
+            {
+                label: 'F1-Score',
+                data: f11D,
+                fill: true,
                 borderColor: documentStyle.getPropertyValue('--p-purple-400'),
                 pointBackgroundColor: documentStyle.getPropertyValue('--p-purple-400'),
                 pointBorderColor: documentStyle.getPropertyValue('--p-purple-400'),
-                pointHoverBackgroundColor: textColor,
-                pointHoverBorderColor: documentStyle.getPropertyValue('--p-purple-400'),
-                data: [28, 48, 40, 19, 96, 27, 100]
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-purple-400')
             }
         ]
     };
 
-    radarData1.value = {
-        labels: ['Felicidade', 'Tristeza', 'Raiva', 'Medo', 'Surpresa', 'Nojo', 'Neutro'],
+    // ======================================================
+    // RADAR (MULTIMODAL) — HARDCODED (placeholders)
+    // Troque quando tiver os números reais
+    // ======================================================
+    const precisionMM = [89.62, 80.29, 81.99, 79.05, 85.77, 78.77, 90.54];
+    const recallMM = [80.44, 82.29, 82.99, 77.31, 93.04, 80.75, 88.08];
+    const f1MM = [84.78, 81.28, 82.48, 78.17, 89.15, 79.74, 89.29];
+
+    radarDataMM.value = {
+        labels: predictedLabels,
         datasets: [
             {
-                label: 'Modelo A1',
-                borderColor: documentStyle.getPropertyValue('--p-indigo-400'),
-                pointBackgroundColor: documentStyle.getPropertyValue('--p-indigo-400'),
-                pointBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
-                pointHoverBackgroundColor: textColor,
-                pointHoverBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
-                data: [65, 59, 90, 81, 56, 55, 40]
+                label: 'Precisão (MM)',
+                data: precisionMM,
+                fill: true,
+                borderColor: documentStyle.getPropertyValue('--p-green-400'),
+                pointBackgroundColor: documentStyle.getPropertyValue('--p-green-400'),
+                pointBorderColor: documentStyle.getPropertyValue('--p-green-400'),
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-green-400')
+            },
+            {
+                label: 'Recall (MM)',
+                data: recallMM,
+                fill: true,
+                borderColor: documentStyle.getPropertyValue('--p-cyan-400'),
+                pointBackgroundColor: documentStyle.getPropertyValue('--p-cyan-400'),
+                pointBorderColor: documentStyle.getPropertyValue('--p-cyan-400'),
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-cyan-400')
+            },
+            {
+                label: 'F1-Score (MM)',
+                data: f1MM,
+                fill: true,
+                borderColor: documentStyle.getPropertyValue('--p-orange-400'),
+                pointBackgroundColor: documentStyle.getPropertyValue('--p-orange-400'),
+                pointBorderColor: documentStyle.getPropertyValue('--p-orange-400'),
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-orange-400')
             }
         ]
     };
 
+    // ---- opções comuns ao radar (escala em %) ----
     radarOptions.value = {
+        maintainAspectRatio: false,
         plugins: {
-            legend: {
-                labels: {
-                    fontColor: textColor
-                }
-            }
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.r.toFixed(2)}%` } }
         },
         scales: {
             r: {
-                grid: {
-                    color: textColorSecondary
-                }
+                suggestedMin: 70,
+                suggestedMax: 100,
+                ticks: { showLabelBackdrop: false, callback: (v) => `${v}%` },
+                pointLabels: { font: { size: 12 } }
             }
         }
     };
 }
 
+// re-render ao trocar tema/cores
 watch(
     [getPrimary, getSurface, isDarkTheme],
     () => {
@@ -282,13 +289,12 @@ watch(
     { immediate: true }
 );
 
-// calcula o máximo pra normalizar
+// ====== Heatmap por célula (usa matriz 1D como base para normalizar) ======
 const maxValue = Math.max(...confusionMatrix.value.flatMap((row) => predictedLabels.map((k) => row[k])));
 
-// função que retorna um objeto de estilos dinâmico
 function cellStyle({ data, column }) {
     const value = data[column.field];
-    const alpha = value / maxValue; // normaliza entre 0 e 1
+    const alpha = value / maxValue; // 0..1
     return {
         backgroundColor: `rgba(33,150,243,${alpha.toFixed(2)})`,
         color: alpha > 0.5 ? '#fff' : '#000',
@@ -299,46 +305,89 @@ function cellStyle({ data, column }) {
         justifyContent: 'center'
     };
 }
-const json_1d_model = {
-    accuracy: 1,
-    recall: 2,
-    f1_score: 3
-};
-const json_mm_model = {
-    accuracy: 666,
-    recall: 420,
-    f1_score: 37
-};
+const activeTab = ref('0'); // aba ativa: '0' = 1D, '1' = MultiModal
+const refreshKey = ref(0); // força re-render dos charts
+
+function onTabChange() {
+    refreshKey.value++; // incrementa sempre que a aba muda
+}
 </script>
 
 <template>
-    <!-- Container Grid -->
-    <!-- <div class="grid grid-cols-12 items-center">
-        <div class="col-span-9">
-            <h2 class="text-left">Dashboard com dados mockados</h2>
-        </div>
-        <div class="col-span-3 grid grid-cols-3 gap-2">
-            <Button label="Tela 1" :onClick="clicou"></Button>
-            <Button label="Tela 2" disabled="true" :onClick="clicou"></Button>
-            <Button label="Tela 3" disabled="true" :onClick="clicou"></Button>
-        </div>
-    </div> -->
-
     <div class="grid items-center">
-        <Tabs value="0">
+        <Tabs v-model:value="activeTab" @update:value="onTabChange">
             <TabList>
                 <Tab value="0">1D</Tab>
                 <Tab value="1">MultiModal</Tab>
             </TabList>
+
             <TabPanels>
+                <!-- ===================== TAB 1D ===================== -->
                 <TabPanel value="0">
                     <div class="grid mt-4 grid-cols-12 gap-4 items-center">
                         <StatsWidget :data="json_1d_model" />
+                        <Divider class="col-span-12" />
+
+                        <div class="col-span-12 grid grid-cols-2 gap-4">
+                            <!-- Radar + Pie -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="card p-4 bg-white shadow-md flex flex-col">
+                                    <div class="font-semibold text-xl mb-2">Perfil de Emoções (1D)</div>
+                                    <div class="w-full h-[320px]">
+                                        <!-- <- altura definida -->
+                                        <Chart type="radar" :data="radarData1" :options="radarOptions" :key="refreshKey" class="w-full h-full" />
+                                        <!-- <- preencher o container -->
+                                    </div>
+                                </div>
+
+                                <div class="card p-4 bg-white shadow-md flex flex-col items-center">
+                                    <div class="font-semibold text-xl mb-2">Distribuição de Emoções</div>
+                                    <Chart type="pie" :data="pieData" :options="pieOptions" :key="refreshKey" />
+                                </div>
+                            </div>
+
+                            <!-- Matriz 1D -->
+                            <div class="card p-4 bg-white shadow-md" style="overflow: auto; max-height: 450px">
+                                <div class="font-semibold text-xl mb-4">Matriz de Confusão (1D)</div>
+                                <DataTable :value="confusionMatrix" showGridlines :tableStyle="{ width: '100%' }" scrollable scrollHeight="calc(100% - 2rem)">
+                                    <Column field="trueLabel" header="Classe Verdadeira" :style="{ width: '15%' }" />
+                                    <Column v-for="pred in predictedLabels" :key="pred" :field="pred" :header="pred" :bodyStyle="cellStyle" :style="{ textAlign: 'center', width: `${85 / predictedLabels.length}%` }" />
+                                </DataTable>
+                            </div>
+                        </div>
                     </div>
                 </TabPanel>
+
+                <!-- ===================== TAB MultiModal ===================== -->
                 <TabPanel value="1">
                     <div class="grid mt-4 grid-cols-12 gap-4 items-center">
                         <StatsWidget :data="json_mm_model" />
+                        <Divider class="col-span-12" />
+
+                        <div class="col-span-12 grid grid-cols-2 gap-4">
+                            <!-- Radar + Pie -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="card p-4 bg-white shadow-md flex flex-col">
+                                    <div class="font-semibold text-xl mb-2">Perfil de Emoções (MultiModal)</div>
+                                    <div class="w-full h-[320px]">
+                                        <Chart type="radar" :data="radarDataMM" :options="radarOptions" :key="refreshKey" />
+                                    </div>
+                                </div>
+                                <div class="card p-4 bg-white shadow-md flex flex-col items-center">
+                                    <div class="font-semibold text-xl mb-2">Distribuição de Emoções</div>
+                                    <Chart type="pie" :data="pieDataMM" :options="pieOptions" :key="refreshKey" />
+                                </div>
+                            </div>
+
+                            <!-- Matriz MM -->
+                            <div class="card p-4 bg-white shadow-md" style="overflow: auto; max-height: 450px">
+                                <div class="font-semibold text-xl mb-4">Matriz de Confusão (MultiModal)</div>
+                                <DataTable :value="confusionMatrixMM" showGridlines :tableStyle="{ width: '100%' }" scrollable scrollHeight="calc(100% - 2rem)">
+                                    <Column field="trueLabel" header="Classe Verdadeira" :style="{ width: '15%' }" />
+                                    <Column v-for="pred in predictedLabels" :key="pred" :field="pred" :header="pred" :bodyStyle="cellStyle" :style="{ textAlign: 'center', width: `${85 / predictedLabels.length}%` }" />
+                                </DataTable>
+                            </div>
+                        </div>
                     </div>
                 </TabPanel>
             </TabPanels>
@@ -346,44 +395,8 @@ const json_mm_model = {
     </div>
 
     <Divider class="p-0 m-0" />
-    <div class="grid grid-cols-12 gap-4 mt-4">
-        <!-- Container dos Gráficos - 2x2 -->
-        <!-- <div class="col-span-12 grid grid-cols-2 gap-4">
-            <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Evolução da Acurácia por Época</div>
-                <Chart type="line" :data="lineData" :options="lineOptions"></Chart>
-            </div>
-
-            <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Comparação de Acurácia: Treino vs. Teste</div>
-                <Chart type="bar" :data="barData" :options="barOptions"></Chart>
-            </div>
-        </div> -->
-        <div class="col-span-12 grid grid-cols-3 gap-4">
-            <!-- Gráfico Radar -->
-            <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Perfil de Emoções</div>
-                <Chart type="radar" :data="radarData1" :options="radarOptions"></Chart>
-            </div>
-
-            <!-- Gráfico Pie -->
-            <div class="card p-4 bg-white shadow-md flex flex-col items-center">
-                <div class="font-semibold text-xl mb-2">Distribuição de Emoções</div>
-                <Chart type="pie" :data="pieData" :options="pieOptions"></Chart>
-            </div>
-
-            <div class="card p-4 bg-white shadow-md" style="overflow: auto; max-height: 450px">
-                <div class="font-semibold text-xl mb-4">Matriz de Confusão</div>
-
-                <DataTable :value="confusionMatrix" showGridlines :tableStyle="{ width: '100%' }" scrollable scrollHeight="calc(100% - 2rem)">
-                    <Column field="trueLabel" header="Classe Verdadeira" :style="{ width: '15%' }" />
-
-                    <Column v-for="pred in predictedLabels" :key="pred" :field="pred" :header="pred" :bodyStyle="cellStyle" :style="{ textAlign: 'center', width: `${85 / predictedLabels.length}%` }" />
-                </DataTable>
-            </div>
-        </div>
-    </div>
 </template>
+
 <style scoped>
 .card {
     padding: 1rem;

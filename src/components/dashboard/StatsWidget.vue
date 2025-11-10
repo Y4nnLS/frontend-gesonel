@@ -18,7 +18,7 @@ const props = defineProps({
             <div class="flex justify-between mb-4">
                 <div>
                     <span class="block text-muted-color font-medium mb-4">Acurácia</span>
-                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ props.data.accuracy }}%</div>
+                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ props.data.accuracy }}</div>
                 </div>
                 <div class="flex items-center justify-center bg-green-100 dark:bg-green-400/10 rounded-border" style="width: 2.5rem; height: 2.5rem">
                     <i class="pi pi-bullseye text-green-500 !text-xl"></i>
@@ -35,7 +35,7 @@ const props = defineProps({
             <div class="flex justify-between mb-4">
                 <div>
                     <span class="block text-muted-color font-medium mb-4">Recall</span>
-                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ props.data.recall }}%</div>
+                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ props.data.recall }}</div>
                 </div>
                 <div class="flex items-center justify-center bg-blue-100 dark:bg-blue-400/10 rounded-border" style="width: 2.5rem; height: 2.5rem">
                     <i class="pi pi-refresh text-blue-500 !text-xl"></i>
@@ -52,7 +52,7 @@ const props = defineProps({
             <div class="flex justify-between mb-4">
                 <div>
                     <span class="block text-muted-color font-medium mb-4">F1-score</span>
-                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ props.data.f1_score }}%</div>
+                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ props.data.f1_score }}</div>
                 </div>
                 <div class="flex items-center justify-center bg-yellow-100 dark:bg-yellow-400/10 rounded-border" style="width: 2.5rem; height: 2.5rem">
                     <i class="pi pi-star text-yellow-500 !text-xl"></i>
@@ -69,7 +69,7 @@ const props = defineProps({
             <div class="flex justify-between mb-4">
                 <div>
                     <span class="block text-muted-color font-medium mb-4">Support</span>
-                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">92%</div>
+                    <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">92</div>
                 </div>
                 <div class="flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-border" style="width: 2.5rem; height: 2.5rem">
                     <i class="pi pi-th-large text-purple-500 !text-xl"></i>
