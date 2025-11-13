@@ -14,13 +14,13 @@ const router = createRouter({
                     component: () => import('@/views/Dashboard.vue')
                 },
                 {
-                    path: '/mokkup',
-                    name: 'Mokkup',
+                    path: '/indicadores-de-desempenho',
+                    name: 'Indicadores de Desempenho',
                     component: () => import('@/views/Mokkup.vue')
                 },
                 {
-                    path: '/mokkup2',
-                    name: 'Mokkup2',
+                    path: '/demonstracao-testes',
+                    name: 'Demonstração e Testes',
                     component: () => import('@/views/Mokkup2.vue')
                 },
                 {

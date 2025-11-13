@@ -46,18 +46,18 @@ const confusionMatrix = ref([
 
 // ====== MATRIZ DE CONFUSÃO (MultiModal) ======
 const confusionMatrixMM = ref([
-    { trueLabel: 'Raiva', Raiva: 1390, Nojo: 132, Medo: 51, Felicidade: 88, Neutro: 24, Tristeza: 17, Surpresa: 26 },
-    { trueLabel: 'Nojo', Raiva: 38, Nojo: 1422, Medo: 21, Felicidade: 21, Neutro: 48, Tristeza: 162, Surpresa: 16 },
-    { trueLabel: 'Medo', Raiva: 22, Nojo: 24, Medo: 1434, Felicidade: 92, Neutro: 8, Tristeza: 111, Surpresa: 37 },
-    { trueLabel: 'Felicidade', Raiva: 68, Nojo: 22, Medo: 97, Felicidade: 1336, Neutro: 81, Tristeza: 45, Surpresa: 80 },
-    { trueLabel: 'Neutro', Raiva: 6, Nojo: 47, Medo: 9, Felicidade: 97, Neutro: 1615, Tristeza: 40, Surpresa: 0 },
-    { trueLabel: 'Tristeza', Raiva: 3, Nojo: 113, Medo: 83, Felicidade: 35, Neutro: 99, Tristeza: 1395, Surpresa: 0 },
-    { trueLabel: 'Surpresa', Raiva: 24, Nojo: 11, Medo: 54, Felicidade: 107, Neutro: 8, Tristeza: 2, Surpresa: 1522 }
+    { trueLabel: 'Raiva', Raiva: 1555, Nojo: 61, Medo: 7, Felicidade: 55, Neutro: 7, Tristeza: 18, Surpresa: 16 },
+    { trueLabel: 'Nojo', Raiva: 25, Nojo: 1596, Medo: 12, Felicidade: 19, Neutro: 14, Tristeza: 48, Surpresa: 7 },
+    { trueLabel: 'Medo', Raiva: 51, Nojo: 37, Medo: 1455, Felicidade: 56, Neutro: 23, Tristeza: 77, Surpresa: 23 },
+    { trueLabel: 'Felicidade', Raiva: 49, Nojo: 29, Medo: 19, Felicidade: 1543, Neutro: 21, Tristeza: 40, Surpresa: 24 },
+    { trueLabel: 'Neutro', Raiva: 13, Nojo: 40, Medo: 15, Felicidade: 12, Neutro: 1587, Tristeza: 55, Surpresa: 3 },
+    { trueLabel: 'Tristeza', Raiva: 7, Nojo: 65, Medo: 32, Felicidade: 33, Neutro: 31, Tristeza: 1554, Surpresa: 4 },
+    { trueLabel: 'Surpresa', Raiva: 62, Nojo: 59, Medo: 32, Felicidade: 85, Neutro: 15, Tristeza: 23, Surpresa: 1449 }
 ]);
 
 // ====== KPIs dos widgets ======
-const json_1d_model = { accuracy: 0.8361, recall: 0.8361, f1_score: '0.8360' };
-const json_mm_model = { accuracy: 0.8902, recall: 0.8902, f1_score: 0.8904 };
+const json_1d_model = { accuracy: '83.61%', recall: '83.61%', f1_score: '83.60%' };
+const json_mm_model = { accuracy: '89.02%', recall: '89.02%', f1_score: '89.04%' };
 
 // ====== init ======
 onMounted(() => {
@@ -102,7 +102,7 @@ function setColorOptions() {
         labels: [...predictedLabels],
         datasets: [
             {
-                data: [20, 15, 25, 30, 10, 18, 12],
+                data: [1719, 1721, 1722, 1725, 1725, 1726, 1725],
                 backgroundColor: [
                     documentStyle.getPropertyValue('--p-indigo-500'),
                     documentStyle.getPropertyValue('--p-purple-500'),
@@ -128,7 +128,7 @@ function setColorOptions() {
         labels: [...predictedLabels],
         datasets: [
             {
-                data: [20, 15, 25, 30, 10, 18, 12],
+                data: [1728, 1728, 1728, 1728, 1728, 1728, 1728],
                 backgroundColor: [
                     documentStyle.getPropertyValue('--p-indigo-500'),
                     documentStyle.getPropertyValue('--p-purple-500'),
@@ -225,15 +225,15 @@ function setColorOptions() {
     // RADAR (MULTIMODAL) — HARDCODED (placeholders)
     // Troque quando tiver os números reais
     // ======================================================
-    const precisionMM = [89.62, 80.29, 81.99, 79.05, 85.77, 78.77, 90.54];
-    const recallMM = [80.44, 82.29, 82.99, 77.31, 93.04, 80.75, 88.08];
-    const f1MM = [84.78, 81.28, 82.48, 78.17, 89.15, 79.74, 89.29];
+    const precisionMM = [88.25, 84.58, 92.56, 85.58, 93.46, 85.62, 94.95];
+    const recallMM = [90.46, 92.74, 84.49, 89.45, 92.0, 90.03, 84.0];
+    const f1MM = [89.34, 88.47, 88.34, 87.47, 92.73, 87.77, 89.14];
 
     radarDataMM.value = {
         labels: predictedLabels,
         datasets: [
             {
-                label: 'Precisão (MM)',
+                label: 'Precisão',
                 data: precisionMM,
                 fill: true,
                 borderColor: documentStyle.getPropertyValue('--p-green-400'),
@@ -242,7 +242,7 @@ function setColorOptions() {
                 pointHoverBorderColor: documentStyle.getPropertyValue('--p-green-400')
             },
             {
-                label: 'Recall (MM)',
+                label: 'Recall',
                 data: recallMM,
                 fill: true,
                 borderColor: documentStyle.getPropertyValue('--p-cyan-400'),
@@ -251,7 +251,7 @@ function setColorOptions() {
                 pointHoverBorderColor: documentStyle.getPropertyValue('--p-cyan-400')
             },
             {
-                label: 'F1-Score (MM)',
+                label: 'F1-Score',
                 data: f1MM,
                 fill: true,
                 borderColor: documentStyle.getPropertyValue('--p-orange-400'),
@@ -367,10 +367,18 @@ function onTabChange() {
                         <div class="col-span-12 grid grid-cols-2 gap-4">
                             <!-- Radar + Pie -->
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="card p-4 bg-white shadow-md flex flex-col">
+                                <!-- <div class="card p-4 bg-white shadow-md flex flex-col">
                                     <div class="font-semibold text-xl mb-2">Perfil de Emoções (MultiModal)</div>
                                     <div class="w-full h-[320px]">
                                         <Chart type="radar" :data="radarDataMM" :options="radarOptions" :key="refreshKey" />
+                                    </div>
+                                </div> -->
+                                <div class="card p-4 bg-white shadow-md flex flex-col">
+                                    <div class="font-semibold text-xl mb-2">Perfil de Emoções (MultiModal)</div>
+                                    <div class="w-full h-[320px]">
+                                        <!-- <- altura definida -->
+                                        <Chart type="radar" :data="radarDataMM" :options="radarOptions" :key="refreshKey" class="w-full h-full" />
+                                        <!-- <- preencher o container -->
                                     </div>
                                 </div>
                                 <div class="card p-4 bg-white shadow-md flex flex-col items-center">
