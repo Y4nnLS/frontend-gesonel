@@ -332,7 +332,7 @@ function onTabChange() {
                             <!-- Radar + Pie -->
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="card p-4 bg-white shadow-md flex flex-col">
-                                    <div class="font-semibold text-xl mb-2">Perfil de Emoções (1D)</div>
+                                    <div class="font-semibold text-xl mb-2">Perfil de Emoções</div>
                                     <div class="w-full h-[320px]">
                                         <!-- <- altura definida -->
                                         <Chart type="radar" :data="radarData1" :options="radarOptions" :key="refreshKey" class="w-full h-full" />
@@ -348,7 +348,7 @@ function onTabChange() {
 
                             <!-- Matriz 1D -->
                             <div class="card p-4 bg-white shadow-md" style="overflow: auto; max-height: 450px">
-                                <div class="font-semibold text-xl mb-4">Matriz de Confusão (1D)</div>
+                                <div class="font-semibold text-xl mb-4">Matriz de Confusão</div>
                                 <DataTable :value="confusionMatrix" showGridlines :tableStyle="{ width: '100%' }" scrollable scrollHeight="calc(100% - 2rem)">
                                     <Column field="trueLabel" header="Classe Verdadeira" :style="{ width: '15%' }" />
                                     <Column v-for="pred in predictedLabels" :key="pred" :field="pred" :header="pred" :bodyStyle="cellStyle" :style="{ textAlign: 'center', width: `${85 / predictedLabels.length}%` }" />
@@ -374,7 +374,7 @@ function onTabChange() {
                                     </div>
                                 </div> -->
                                 <div class="card p-4 bg-white shadow-md flex flex-col">
-                                    <div class="font-semibold text-xl mb-2">Perfil de Emoções (MultiModal)</div>
+                                    <div class="font-semibold text-xl mb-2">Perfil de Emoções</div>
                                     <div class="w-full h-[320px]">
                                         <!-- <- altura definida -->
                                         <Chart type="radar" :data="radarDataMM" :options="radarOptions" :key="refreshKey" class="w-full h-full" />
@@ -389,7 +389,7 @@ function onTabChange() {
 
                             <!-- Matriz MM -->
                             <div class="card p-4 bg-white shadow-md" style="overflow: auto; max-height: 450px">
-                                <div class="font-semibold text-xl mb-4">Matriz de Confusão (MultiModal)</div>
+                                <div class="font-semibold text-xl mb-4">Matriz de Confusão</div>
                                 <DataTable :value="confusionMatrixMM" showGridlines :tableStyle="{ width: '100%' }" scrollable scrollHeight="calc(100% - 2rem)">
                                     <Column field="trueLabel" header="Classe Verdadeira" :style="{ width: '15%' }" />
                                     <Column v-for="pred in predictedLabels" :key="pred" :field="pred" :header="pred" :bodyStyle="cellStyle" :style="{ textAlign: 'center', width: `${85 / predictedLabels.length}%` }" />
