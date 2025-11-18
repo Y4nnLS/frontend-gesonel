@@ -388,6 +388,91 @@ function onHideAudioDialog() {
 }
 
 onBeforeUnmount(revokeAudioUrl);
+
+// --- dialog de probabilidades (radar) ---
+const probsDialogVisible = ref(false);
+const radarData1d = ref(null);
+const radarDataMm = ref(null);
+
+const radarOptions = {
+    responsive: true,
+    plugins: {
+        legend: {
+            position: 'top'
+        },
+        tooltip: {
+            callbacks: {
+                // mostra com 2 casas + %
+                label: (ctx) => {
+                    const v = ctx.parsed.r;
+                    return `${ctx.dataset.label}: ${v.toFixed(2)}%`;
+                }
+            }
+        }
+    },
+    scales: {
+        r: {
+            beginAtZero: true,
+            min: 0,
+            max: 100, // agora vai até 100%
+            ticks: {
+                stepSize: 20,
+                callback: (v) => `${v}%` // legenda do eixo em %
+            }
+        }
+    }
+};
+
+function safeParseProbs(raw) {
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            console.warn('Falha ao parsear probs:', e);
+            return null;
+        }
+    }
+    return raw; // já é objeto
+}
+
+function buildRadarData(probs, label) {
+    if (!probs) return null;
+    const labels = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sadness', 'surprise'];
+
+    // converte de [0..1] para [0..100]
+    const data = labels.map((k) => Number(probs[k] ?? 0) * 100);
+
+    return {
+        labels,
+        datasets: [
+            {
+                label,
+                data,
+                fill: true,
+                backgroundColor: 'rgba(59,130,246,0.2)', // azulzinho
+                borderColor: 'rgba(37,99,235,1)',
+                pointBackgroundColor: 'rgba(37,99,235,1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(37,99,235,1)'
+            }
+        ]
+    };
+}
+
+function openProbsDialog(row) {
+    // row é o objeto da tabela; os campos reais estão em row._raw
+    const base = row._raw || row;
+
+    const m1 = safeParseProbs(base.model1d_probs);
+    const mm = safeParseProbs(base.mm_probs);
+
+    radarData1d.value = buildRadarData(m1, 'Confiabilidade');
+    radarDataMm.value = buildRadarData(mm, 'Confiabilidade');
+
+    probsDialogVisible.value = true;
+}
 </script>
 
 <template>
@@ -508,7 +593,11 @@ onBeforeUnmount(revokeAudioUrl);
                             </template>
                         </Column>
                         <Column field="model" header="Modelo" style="min-width: 12rem" />
-                        <Column header="Confiabilidade" field="accuracy" style="min-width: 10rem" />
+                        <Column header="Confiabilidade" field="accuracy" style="min-width: 10rem">
+                            <template #body="{ data }">
+                                <span>{{ (data.accuracy * 100).toFixed(2) }}%</span>
+                            </template>
+                        </Column>
                         <Column header="Status" field="processing_status" style="min-width: 10rem" />
                         <Column field="emotion" header="Emoção" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem">
                             <template #body="{ data }">
@@ -536,7 +625,9 @@ onBeforeUnmount(revokeAudioUrl);
                         <Column header="Ações" bodyClass="text-center" style="min-width: 10rem">
                             <template #body="{ data }">
                                 <Button class="p-button-rounded" icon="pi pi-play" severity="secondary" v-tooltip.top="'Ouvir'" style="width: 30px; height: 30px" @click="openAudioDialog(data)" />
-                                <Button class="p-button-rounded" icon="pi pi-search" severity="secondary" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="detailStatus(data.audio_id)" />
+                                <Button class="p-button-rounded" icon="pi pi-chart-bar" severity="secondary" v-tooltip.top="'Ver probabilidades (radar)'" style="width: 30px; height: 30px" @click="openProbsDialog(data)" />
+
+                                <!-- <Button class="p-button-rounded" icon="pi pi-search" severity="secondary" v-tooltip.top="'Recarregar listas'" style="width: 30px; height: 30px" @click="detailStatus(data.audio_id)" /> -->
                                 <Button class="p-button-rounded" icon="pi pi-send" severity="success" v-tooltip.top="'Analisar este áudio'" style="width: 30px; height: 30px" @click="analyzeAudioById(data.audio_id)" />
                                 <Button class="p-button-rounded ml-1" icon="pi pi-download" severity="info" v-tooltip.top="'Baixar .wav'" style="width: 30px; height: 30px" @click="downloadAudio(data.audio_id)" />
                             </template>
@@ -551,6 +642,20 @@ onBeforeUnmount(revokeAudioUrl);
             <div class="text-sm opacity-80 truncate">{{ currentAudioName }}</div>
             <audio v-if="currentAudioSrc" :src="currentAudioSrc" controls style="width: 100%"></audio>
             <div v-else class="text-sm">Carregando áudio…</div>
+        </div>
+    </Dialog>
+    <Dialog v-model:visible="probsDialogVisible" modal header="Distribuição de probabilidades" :draggable="false" :style="{ width: '60rem', maxWidth: '95vw' }">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div style="border-right: 1px solid gray">
+                <h4 class="text-center mb-2">Modelo 1D</h4>
+                <Chart type="radar" :data="radarData1d" :options="radarOptions" />
+            </div>
+            <div>
+                <h4 class="text-center mb-2">Modelo Multimodal</h4>
+                <Chart type="radar" :data="radarDataMm" :options="radarOptions" />
+            </div>
+
+            <div v-if="!radarData1d && !radarDataMm" class="text-center text-sm opacity-80 col-span-full">Nenhuma probabilidade disponível para este áudio.</div>
         </div>
     </Dialog>
 </template>
